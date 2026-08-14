@@ -2,7 +2,7 @@ import type { CartItemWithProduct, Profile } from './types'
 
 // Set this to YOUR WhatsApp business number, in international format,
 // digits only, no + or spaces. Example: 15551234567
-const WHATSAPP_BUSINESS_NUMBER = 'REPLACE_WITH_YOUR_NUMBER'
+const WHATSAPP_BUSINESS_NUMBER = '919619616412'
 
 export function buildWhatsAppCheckoutLink(
   items: CartItemWithProduct[],
