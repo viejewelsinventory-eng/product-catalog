@@ -1,31 +1,28 @@
 import { createServerClient } from '@supabase/ssr'
-import { NextResponse, type NextRequest } from 'next/server'
+import { cookies } from 'next/headers'
 
-export async function updateSession(request: NextRequest) {
-  let supabaseResponse = NextResponse.next({ request })
+export function createClient() {
+  const cookieStore = cookies()
 
-  const supabase = createServerClient(
+  return createServerClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
     {
       cookies: {
         getAll() {
-          return request.cookies.getAll()
+          return cookieStore.getAll()
         },
         setAll(cookiesToSet) {
-          cookiesToSet.forEach(({ name, value }) =>
-            request.cookies.set(name, value)
-          )
-          supabaseResponse = NextResponse.next({ request })
-          cookiesToSet.forEach(({ name, value, options }) =>
-            supabaseResponse.cookies.set(name, value, options)
-          )
+          try {
+            cookiesToSet.forEach(({ name, value, options }) =>
+              cookieStore.set(name, value, options)
+            )
+          } catch {
+            // Ignored if called from a Server Component — the middleware
+            // handles session refresh instead.
+          }
         },
       },
     }
   )
-
-  await supabase.auth.getUser()
-
-  return supabaseResponse
 }
