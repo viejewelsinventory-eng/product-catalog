@@ -6,7 +6,6 @@ import ProductCard from './ProductCard'
 const PAGE_SIZE = 50
 export type ActiveFilters = {
   category: string | null
-  brand: string | null
   types: string[]
   subcategories: string[]
   tags: string[]
@@ -34,9 +33,6 @@ export default function ProductGrid({
         .range(pageIndex * PAGE_SIZE, pageIndex * PAGE_SIZE + PAGE_SIZE - 1)
       if (filters.category) {
         query = query.eq('category', filters.category)
-      }
-      if (filters.brand) {
-        query = query.eq('brand', filters.brand)
       }
       if (filters.types.length > 0) {
         query = query.in('type', filters.types)
