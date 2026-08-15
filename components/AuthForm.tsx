@@ -26,33 +26,25 @@ export default function AuthForm({ mode }: AuthFormProps) {
     setLoading(true)
 
     if (mode === 'signup') {
-      const { data, error: signUpError } = await supabase.auth.signUp({
+      // full_name / phone_number / company_name are passed as auth metadata.
+      // The handle_new_user() DB trigger reads these from raw_user_meta_data
+      // and creates the profiles row automatically — no separate insert needed.
+      const { error: signUpError } = await supabase.auth.signUp({
         email,
         password,
+        options: {
+          data: {
+            full_name: fullName,
+            phone_number: phoneNumber,
+            company_name: companyName,
+          },
+        },
       })
 
       if (signUpError) {
         setError(signUpError.message)
         setLoading(false)
         return
-      }
-
-      if (data.user) {
-        const { error: profileError } = await supabase.from('profiles').upsert({
-  id: data.user.id,
-  full_name: fullName,
-  phone_number: phoneNumber,
-  company_name: companyName,
-}, { onConflict: 'id' })
-
-        if (profileError) {
-          console.error('Failed to create profile:', profileError)
-          setError(
-            'Account created, but there was an issue saving your profile. Please contact support.'
-          )
-          setLoading(false)
-          return
-        }
       }
 
       router.push('/')
