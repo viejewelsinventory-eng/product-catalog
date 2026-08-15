@@ -92,17 +92,26 @@ export default function Sidebar({
     loadOptions()
   }, [supabase])
 
-  // Admin-only: load category options, only when the viewer is an admin
+  // Admin-only: load category options, filtered by the selected Display
+  // value so only categories that actually exist for that tier show up.
   useEffect(() => {
     if (!isAdmin) return
     const loadCategories = async () => {
-      const { data } = await supabase.rpc('get_distinct_categories')
+      const { data } = await supabase.rpc('get_distinct_categories', {
+        visibility_filter: selectedVisibility || null,
+      })
       if (data) {
-        setAdminCategories((data as { category: string }[]).map((row) => row.category))
+        const cats = (data as { category: string }[]).map((row) => row.category)
+        setAdminCategories(cats)
+        // If the currently selected category no longer applies under the
+        // new Display filter, clear it rather than leaving a stale/invalid combo.
+        if (selectedCategory && !cats.includes(selectedCategory)) {
+          onCategoryChange(null)
+        }
       }
     }
     loadCategories()
-  }, [isAdmin, supabase])
+  }, [isAdmin, selectedVisibility, supabase])
 
   const toggleExpanded = (type: string) => {
     setExpandedTypes((prev) => {
@@ -143,7 +152,7 @@ export default function Sidebar({
   }
 
   return (
-    <aside className="w-full lg:w-64 flex-shrink-0 space-y-6">
+    <aside className="w-full lg:w-64 flex-shrink-0 space-y-6 lg:sticky lg:top-4 lg:self-start lg:max-h-[calc(100vh-2rem)] lg:overflow-y-auto">
       {/* Price range */}
       <div className="bg-white border border-gray-200 rounded-lg p-4">
         <h3 className="text-sm font-semibold text-gray-900 mb-3">
@@ -252,24 +261,6 @@ export default function Sidebar({
 
           <div>
             <label className="block text-xs font-medium text-amber-800 mb-1">
-              Category
-            </label>
-            <select
-              value={selectedCategory ?? ''}
-              onChange={(e) => onCategoryChange(e.target.value || null)}
-              className="w-full text-sm border border-amber-300 rounded-md px-2 py-1.5 bg-white focus:outline-none focus:ring-2 focus:ring-amber-500"
-            >
-              <option value="">All Categories</option>
-              {adminCategories.map((cat) => (
-                <option key={cat} value={cat}>
-                  {cat}
-                </option>
-              ))}
-            </select>
-          </div>
-
-          <div>
-            <label className="block text-xs font-medium text-amber-800 mb-1">
               Display
             </label>
             <select
@@ -281,6 +272,24 @@ export default function Sidebar({
               {VISIBILITY_OPTIONS.map((opt) => (
                 <option key={opt.value} value={opt.value}>
                   {opt.label}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          <div>
+            <label className="block text-xs font-medium text-amber-800 mb-1">
+              Category
+            </label>
+            <select
+              value={selectedCategory ?? ''}
+              onChange={(e) => onCategoryChange(e.target.value || null)}
+              className="w-full text-sm border border-amber-300 rounded-md px-2 py-1.5 bg-white focus:outline-none focus:ring-2 focus:ring-amber-500"
+            >
+              <option value="">All Categories</option>
+              {adminCategories.map((cat) => (
+                <option key={cat} value={cat}>
+                  {cat}
                 </option>
               ))}
             </select>
