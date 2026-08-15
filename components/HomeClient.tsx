@@ -1,12 +1,10 @@
 'use client'
 import { useState } from 'react'
 import Navbar from './Navbar'
-import FilterBar from './FilterBar'
 import Sidebar from './Sidebar'
 import ProductGrid, { type ActiveFilters } from './ProductGrid'
 import type { Profile } from '@/lib/types'
 export default function HomeClient({ profile }: { profile: Profile | null }) {
-  const [brand, setBrand] = useState<string | null>(null)
   const [types, setTypes] = useState<string[]>([])
   const [subcategories, setSubcategories] = useState<string[]>([])
   const [tags, setTags] = useState<string[]>([])
@@ -20,22 +18,17 @@ export default function HomeClient({ profile }: { profile: Profile | null }) {
 
   const filters: ActiveFilters = {
     category: isAdmin ? category : null,
-    brand,
     types,
     subcategories,
     tags,
     minPrice,
     maxPrice,
-    visibility: isAdmin ? visibility : null,
+    visibility: isAdmin ? visibility : 'registered',
   }
   return (
     <div className="min-h-screen bg-gray-50">
       <Navbar profile={profile} />
       <div className="max-w-7xl mx-auto px-4 py-6">
-        <FilterBar
-          selectedBrand={brand}
-          onBrandChange={setBrand}
-        />
         <div className="flex flex-col lg:flex-row gap-6">
           <Sidebar
             isAdmin={isAdmin}
