@@ -38,12 +38,12 @@ export default function AuthForm({ mode }: AuthFormProps) {
       }
 
       if (data.user) {
-        const { error: profileError } = await supabase.from('profiles').insert({
-          id: data.user.id,
-          full_name: fullName,
-          phone_number: phoneNumber,
-          company_name: companyName,
-        })
+        const { error: profileError } = await supabase.from('profiles').upsert({
+  id: data.user.id,
+  full_name: fullName,
+  phone_number: phoneNumber,
+  company_name: companyName,
+}, { onConflict: 'id' })
 
         if (profileError) {
           console.error('Failed to create profile:', profileError)
