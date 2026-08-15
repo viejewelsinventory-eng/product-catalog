@@ -12,6 +12,7 @@ export type ActiveFilters = {
   tags: string[]
   minPrice: number | null
   maxPrice: number | null
+  visibility: string | null
 }
 export default function ProductGrid({
   filters,
@@ -51,6 +52,9 @@ export default function ProductGrid({
       }
       if (filters.maxPrice !== null) {
         query = query.lte('price', filters.maxPrice)
+      }
+      if (filters.visibility) {
+        query = query.eq('visibility', filters.visibility)
       }
       return query
     },
