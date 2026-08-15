@@ -9,6 +9,8 @@ export type SidebarFilters = {
   tags: string[]
   minPrice: number | null
   maxPrice: number | null
+  category: string | null
+  visibility: string | null
 }
 
 type SidebarProps = {
@@ -18,13 +20,23 @@ type SidebarProps = {
   selectedTags: string[]
   minPrice: number | null
   maxPrice: number | null
+  selectedCategory: string | null
+  selectedVisibility: string | null
   onTypesChange: (values: string[]) => void
   onSubcategoriesChange: (values: string[]) => void
   onTagsChange: (values: string[]) => void
   onPriceChange: (min: number | null, max: number | null) => void
+  onCategoryChange: (value: string | null) => void
+  onVisibilityChange: (value: string | null) => void
 }
 
 const DEFAULT_MAX_PRICE = 1000
+
+const VISIBILITY_OPTIONS: { value: string; label: string }[] = [
+  { value: 'admin', label: 'Admin Only' },
+  { value: 'registered', label: 'Registered User' },
+  { value: 'public', label: 'Main Website' },
+]
 
 export default function Sidebar({
   isAdmin,
@@ -33,33 +45,34 @@ export default function Sidebar({
   selectedTags,
   minPrice,
   maxPrice,
+  selectedCategory,
+  selectedVisibility,
   onTypesChange,
   onSubcategoriesChange,
   onTagsChange,
   onPriceChange,
+  onCategoryChange,
+  onVisibilityChange,
 }: SidebarProps) {
   const supabase = createClient()
-  // Map of type -> sorted list of its subcategories
   const [typeGroups, setTypeGroups] = useState<Record<string, string[]>>({})
   const [expandedTypes, setExpandedTypes] = useState<Set<string>>(new Set())
   const [allTags, setAllTags] = useState<string[]>([])
+  const [adminCategories, setAdminCategories] = useState<string[]>([])
   const [sliderValue, setSliderValue] = useState(maxPrice ?? DEFAULT_MAX_PRICE)
 
   useEffect(() => {
     const loadOptions = async () => {
-      const { data: typeSubData } = await supabase
-        .from('products')
-        .select('type, subcategory')
-        .not('type', 'is', null)
+      const { data: typeSubData } = await supabase.rpc(
+        'get_type_subcategory_groups'
+      )
 
       if (typeSubData) {
         const groups: Record<string, Set<string>> = {}
-        for (const row of typeSubData) {
-          const type = row.type as string
-          const sub = row.subcategory as string | null
-          if (!type) continue
-          if (!groups[type]) groups[type] = new Set()
-          if (sub) groups[type].add(sub)
+        for (const row of typeSubData as { type: string; subcategory: string | null }[]) {
+          if (!row.type) continue
+          if (!groups[row.type]) groups[row.type] = new Set()
+          if (row.subcategory) groups[row.type].add(row.subcategory)
         }
         const sortedGroups: Record<string, string[]> = {}
         Object.keys(groups)
@@ -70,20 +83,26 @@ export default function Sidebar({
         setTypeGroups(sortedGroups)
       }
 
-      const { data: tagData } = await supabase
-        .from('products')
-        .select('tags')
-        .not('tags', 'is', null)
-
+      const { data: tagData } = await supabase.rpc('get_distinct_tags')
       if (tagData) {
-        const flatTags = tagData.flatMap((row) => (row.tags as string[]) ?? [])
-        const unique = Array.from(new Set(flatTags)).sort()
-        setAllTags(unique)
+        setAllTags((tagData as { tag: string }[]).map((row) => row.tag))
       }
     }
 
     loadOptions()
   }, [supabase])
+
+  // Admin-only: load category options, only when the viewer is an admin
+  useEffect(() => {
+    if (!isAdmin) return
+    const loadCategories = async () => {
+      const { data } = await supabase.rpc('get_distinct_categories')
+      if (data) {
+        setAdminCategories((data as { category: string }[]).map((row) => row.category))
+      }
+    }
+    loadCategories()
+  }, [isAdmin, supabase])
 
   const toggleExpanded = (type: string) => {
     setExpandedTypes((prev) => {
@@ -224,17 +243,48 @@ export default function Sidebar({
         </div>
       )}
 
-      {/* Admin-only hidden filters */}
+      {/* Admin-only filters: Category + Display/visibility */}
       {isAdmin && (
-        <div className="bg-amber-50 border border-amber-200 rounded-lg p-4">
-          <h3 className="text-sm font-semibold text-amber-900 mb-2">
+        <div className="bg-amber-50 border border-amber-200 rounded-lg p-4 space-y-4">
+          <h3 className="text-sm font-semibold text-amber-900">
             Admin Filters
           </h3>
-          <p className="text-xs text-amber-700">
-            Hidden filter fields will appear here once configured. Tell
-            Claude which product fields you want to filter by, and it will
-            add the UI here.
-          </p>
+
+          <div>
+            <label className="block text-xs font-medium text-amber-800 mb-1">
+              Category
+            </label>
+            <select
+              value={selectedCategory ?? ''}
+              onChange={(e) => onCategoryChange(e.target.value || null)}
+              className="w-full text-sm border border-amber-300 rounded-md px-2 py-1.5 bg-white focus:outline-none focus:ring-2 focus:ring-amber-500"
+            >
+              <option value="">All Categories</option>
+              {adminCategories.map((cat) => (
+                <option key={cat} value={cat}>
+                  {cat}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          <div>
+            <label className="block text-xs font-medium text-amber-800 mb-1">
+              Display
+            </label>
+            <select
+              value={selectedVisibility ?? ''}
+              onChange={(e) => onVisibilityChange(e.target.value || null)}
+              className="w-full text-sm border border-amber-300 rounded-md px-2 py-1.5 bg-white focus:outline-none focus:ring-2 focus:ring-amber-500"
+            >
+              <option value="">All</option>
+              {VISIBILITY_OPTIONS.map((opt) => (
+                <option key={opt.value} value={opt.value}>
+                  {opt.label}
+                </option>
+              ))}
+            </select>
+          </div>
         </div>
       )}
     </aside>
