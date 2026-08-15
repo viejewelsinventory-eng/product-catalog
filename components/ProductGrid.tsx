@@ -1,21 +1,18 @@
 'use client'
-
 import { useEffect, useState, useCallback } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import type { Product } from '@/lib/types'
 import ProductCard from './ProductCard'
-
 const PAGE_SIZE = 50
-
 export type ActiveFilters = {
   category: string | null
   brand: string | null
+  types: string[]
   subcategories: string[]
   tags: string[]
   minPrice: number | null
   maxPrice: number | null
 }
-
 export default function ProductGrid({
   filters,
 }: {
@@ -27,7 +24,6 @@ export default function ProductGrid({
   const [loading, setLoading] = useState(true)
   const [loadingMore, setLoadingMore] = useState(false)
   const [hasMore, setHasMore] = useState(true)
-
   const buildQuery = useCallback(
     (pageIndex: number) => {
       let query = supabase
@@ -35,12 +31,14 @@ export default function ProductGrid({
         .select('*')
         .order('created_at', { ascending: false })
         .range(pageIndex * PAGE_SIZE, pageIndex * PAGE_SIZE + PAGE_SIZE - 1)
-
       if (filters.category) {
         query = query.eq('category', filters.category)
       }
       if (filters.brand) {
         query = query.eq('brand', filters.brand)
+      }
+      if (filters.types.length > 0) {
+        query = query.in('type', filters.types)
       }
       if (filters.subcategories.length > 0) {
         query = query.in('subcategory', filters.subcategories)
@@ -54,19 +52,16 @@ export default function ProductGrid({
       if (filters.maxPrice !== null) {
         query = query.lte('price', filters.maxPrice)
       }
-
       return query
     },
     [filters, supabase]
   )
-
   // Reset and refetch whenever filters change
   useEffect(() => {
     let cancelled = false
     setLoading(true)
     setPage(0)
     setHasMore(true)
-
     buildQuery(0).then(({ data, error }) => {
       if (cancelled) return
       if (error) {
@@ -78,17 +73,14 @@ export default function ProductGrid({
       }
       setLoading(false)
     })
-
     return () => {
       cancelled = true
     }
   }, [buildQuery])
-
   const loadMore = async () => {
     setLoadingMore(true)
     const nextPage = page + 1
     const { data, error } = await buildQuery(nextPage)
-
     if (error) {
       console.error('Failed to load more products:', error)
     } else {
@@ -98,7 +90,6 @@ export default function ProductGrid({
     }
     setLoadingMore(false)
   }
-
   if (loading) {
     return (
       <div className="flex-1 flex items-center justify-center py-20 text-gray-500">
@@ -106,7 +97,6 @@ export default function ProductGrid({
       </div>
     )
   }
-
   if (products.length === 0) {
     return (
       <div className="flex-1 flex items-center justify-center py-20 text-gray-500">
@@ -114,7 +104,6 @@ export default function ProductGrid({
       </div>
     )
   }
-
   return (
     <div className="flex-1">
       <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
@@ -122,7 +111,6 @@ export default function ProductGrid({
           <ProductCard key={product.id} product={product} />
         ))}
       </div>
-
       {hasMore && (
         <div className="flex justify-center mt-8">
           <button
