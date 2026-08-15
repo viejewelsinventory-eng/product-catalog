@@ -46,5 +46,5 @@ export function getProductImageUrl(driveFileId: string | null): string {
   if (!driveFileId) {
     return '/placeholder-product.png'
   }
-  return `https://drive.google.com/uc?export=view&id=${driveFileId}`
+  return `https://drive.google.com/thumbnail?id=${driveFileId}&sz=w1000`
 }
