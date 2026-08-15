@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react'
 import { createClient } from '@/lib/supabase/client'
 
 export type SidebarFilters = {
+  types: string[]
   subcategories: string[]
   tags: string[]
   minPrice: number | null
@@ -12,10 +13,12 @@ export type SidebarFilters = {
 
 type SidebarProps = {
   isAdmin: boolean
+  selectedTypes: string[]
   selectedSubcategories: string[]
   selectedTags: string[]
   minPrice: number | null
   maxPrice: number | null
+  onTypesChange: (values: string[]) => void
   onSubcategoriesChange: (values: string[]) => void
   onTagsChange: (values: string[]) => void
   onPriceChange: (min: number | null, max: number | null) => void
@@ -25,31 +28,46 @@ const DEFAULT_MAX_PRICE = 1000
 
 export default function Sidebar({
   isAdmin,
+  selectedTypes,
   selectedSubcategories,
   selectedTags,
   minPrice,
   maxPrice,
+  onTypesChange,
   onSubcategoriesChange,
   onTagsChange,
   onPriceChange,
 }: SidebarProps) {
   const supabase = createClient()
-  const [subcategories, setSubcategories] = useState<string[]>([])
+  // Map of type -> sorted list of its subcategories
+  const [typeGroups, setTypeGroups] = useState<Record<string, string[]>>({})
+  const [expandedTypes, setExpandedTypes] = useState<Set<string>>(new Set())
   const [allTags, setAllTags] = useState<string[]>([])
   const [sliderValue, setSliderValue] = useState(maxPrice ?? DEFAULT_MAX_PRICE)
 
   useEffect(() => {
     const loadOptions = async () => {
-      const { data: subcatData } = await supabase
+      const { data: typeSubData } = await supabase
         .from('products')
-        .select('subcategory')
-        .not('subcategory', 'is', null)
+        .select('type, subcategory')
+        .not('type', 'is', null)
 
-      if (subcatData) {
-        const unique = Array.from(
-          new Set(subcatData.map((row) => row.subcategory as string))
-        ).sort()
-        setSubcategories(unique)
+      if (typeSubData) {
+        const groups: Record<string, Set<string>> = {}
+        for (const row of typeSubData) {
+          const type = row.type as string
+          const sub = row.subcategory as string | null
+          if (!type) continue
+          if (!groups[type]) groups[type] = new Set()
+          if (sub) groups[type].add(sub)
+        }
+        const sortedGroups: Record<string, string[]> = {}
+        Object.keys(groups)
+          .sort()
+          .forEach((type) => {
+            sortedGroups[type] = Array.from(groups[type]).sort()
+          })
+        setTypeGroups(sortedGroups)
       }
 
       const { data: tagData } = await supabase
@@ -66,6 +84,23 @@ export default function Sidebar({
 
     loadOptions()
   }, [supabase])
+
+  const toggleExpanded = (type: string) => {
+    setExpandedTypes((prev) => {
+      const next = new Set(prev)
+      if (next.has(type)) next.delete(type)
+      else next.add(type)
+      return next
+    })
+  }
+
+  const toggleType = (type: string) => {
+    if (selectedTypes.includes(type)) {
+      onTypesChange(selectedTypes.filter((v) => v !== type))
+    } else {
+      onTypesChange([...selectedTypes, type])
+    }
+  }
 
   const toggleSubcategory = (value: string) => {
     if (selectedSubcategories.includes(value)) {
@@ -110,27 +145,56 @@ export default function Sidebar({
         </div>
       </div>
 
-      {/* Subcategories */}
-      {subcategories.length > 0 && (
+      {/* Type -> Sub-type (nested) */}
+      {Object.keys(typeGroups).length > 0 && (
         <div className="bg-white border border-gray-200 rounded-lg p-4">
-          <h3 className="text-sm font-semibold text-gray-900 mb-3">
-            Subcategory
-          </h3>
-          <div className="space-y-2 max-h-48 overflow-y-auto">
-            {subcategories.map((sub) => (
-              <label
-                key={sub}
-                className="flex items-center gap-2 text-sm text-gray-700 cursor-pointer"
-              >
-                <input
-                  type="checkbox"
-                  checked={selectedSubcategories.includes(sub)}
-                  onChange={() => toggleSubcategory(sub)}
-                  className="accent-gray-900"
-                />
-                {sub}
-              </label>
-            ))}
+          <h3 className="text-sm font-semibold text-gray-900 mb-3">Type</h3>
+          <div className="space-y-1 max-h-96 overflow-y-auto">
+            {Object.entries(typeGroups).map(([type, subs]) => {
+              const isExpanded = expandedTypes.has(type)
+              return (
+                <div key={type} className="border-b border-gray-100 last:border-0 pb-1">
+                  <div className="flex items-center gap-2 py-1">
+                    <button
+                      type="button"
+                      onClick={() => toggleExpanded(type)}
+                      className="text-gray-400 hover:text-gray-700 w-4 text-xs"
+                      aria-label={isExpanded ? 'Collapse' : 'Expand'}
+                    >
+                      {subs.length > 0 ? (isExpanded ? '▾' : '▸') : ''}
+                    </button>
+                    <label className="flex items-center gap-2 text-sm text-gray-800 cursor-pointer flex-1">
+                      <input
+                        type="checkbox"
+                        checked={selectedTypes.includes(type)}
+                        onChange={() => toggleType(type)}
+                        className="accent-gray-900"
+                      />
+                      {type}
+                    </label>
+                  </div>
+
+                  {isExpanded && subs.length > 0 && (
+                    <div className="ml-8 space-y-1 mt-1">
+                      {subs.map((sub) => (
+                        <label
+                          key={sub}
+                          className="flex items-center gap-2 text-sm text-gray-600 cursor-pointer"
+                        >
+                          <input
+                            type="checkbox"
+                            checked={selectedSubcategories.includes(sub)}
+                            onChange={() => toggleSubcategory(sub)}
+                            className="accent-gray-900"
+                          />
+                          {sub}
+                        </label>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              )
+            })}
           </div>
         </div>
       )}
