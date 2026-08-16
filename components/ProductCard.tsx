@@ -1,11 +1,9 @@
 'use client'
-
 import Image from 'next/image'
 import { useState } from 'react'
 import type { Product } from '@/lib/types'
 import { getProductImageUrl } from '@/lib/types'
 import { useCart } from '@/context/CartContext'
-
 export default function ProductCard({
   product,
   isAdmin,
@@ -18,44 +16,37 @@ export default function ProductCard({
   const { addToCart } = useCart()
   const [adding, setAdding] = useState(false)
   const [imgError, setImgError] = useState(false)
-
   const handleAdd = async (e: React.MouseEvent) => {
     e.stopPropagation()
     setAdding(true)
     await addToCart(product, 1)
     setAdding(false)
   }
-
+  const isBlank = product.visibility === 'blank'
   const imageUrl = getProductImageUrl(product.drive_file_id)
-
+  const displaySrc = isBlank ? '/blank.jpg' : imgError ? '/photo-missing.jpg' : imageUrl
   return (
     <div
       onClick={onOpen}
       className="border border-gray-200 rounded-lg overflow-hidden bg-white flex flex-col hover:shadow-md transition-shadow cursor-pointer"
     >
-      {/* Full image, no cropping */}
+      {/* Full image, no cropping. Blank overrides everything; otherwise fall back to photo-missing on load error */}
       <div className="relative w-full aspect-square bg-gray-100">
-        {!imgError ? (
-          <Image
-            src={imageUrl}
-            alt={product.sku}
-            fill
-            sizes="(max-width: 768px) 50vw, (max-width: 1200px) 33vw, 25vw"
-            className="object-contain"
-            onError={() => setImgError(true)}
-            unoptimized
-          />
-        ) : (
-          <div className="w-full h-full flex items-center justify-center text-gray-400 text-sm">
-            No image
-          </div>
-        )}
+        <Image
+          src={displaySrc}
+          alt={product.sku}
+          fill
+          sizes="(max-width: 768px) 50vw, (max-width: 1200px) 33vw, 25vw"
+          className="object-contain"
+          onError={() => {
+            if (!isBlank) setImgError(true)
+          }}
+          unoptimized
+        />
       </div>
-
       <div className="p-3 flex flex-col gap-1.5">
         {/* SKU under image, shown to everyone */}
         <p className="text-sm font-semibold text-gray-900">{product.sku}</p>
-
         {/* Admin only: file types (tags) available */}
         {isAdmin && product.tags && product.tags.length > 0 && (
           <div className="flex flex-wrap gap-1">
@@ -69,9 +60,7 @@ export default function ProductCard({
             ))}
           </div>
         )}
-
         <p className="text-sm text-gray-700">${product.price.toFixed(2)}</p>
-
         <button
           onClick={handleAdd}
           disabled={adding}
