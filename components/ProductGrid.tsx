@@ -14,12 +14,17 @@ export type ActiveFilters = {
   maxPrice: number | null
   visibility: string | null
 }
+export type SortOption = 'newest' | 'sku_asc' | 'price_asc' | 'price_desc'
 export default function ProductGrid({
   filters,
   isAdmin,
+  search,
+  sortBy,
 }: {
   filters: ActiveFilters
   isAdmin: boolean
+  search: string
+  sortBy: SortOption
 }) {
   const supabase = createClient()
   const [products, setProducts] = useState<Product[]>([])
@@ -33,8 +38,25 @@ export default function ProductGrid({
       let query = supabase
         .from('products')
         .select('*')
-        .order('created_at', { ascending: false })
         .range(pageIndex * PAGE_SIZE, pageIndex * PAGE_SIZE + PAGE_SIZE - 1)
+      switch (sortBy) {
+        case 'sku_asc':
+          query = query.order('sku', { ascending: true })
+          break
+        case 'price_asc':
+          query = query.order('price', { ascending: true })
+          break
+        case 'price_desc':
+          query = query.order('price', { ascending: false })
+          break
+        case 'newest':
+        default:
+          query = query.order('created_at', { ascending: false })
+          break
+      }
+      if (search.trim()) {
+        query = query.ilike('sku', `%${search.trim()}%`)
+      }
       if (filters.category) {
         query = query.eq('category', filters.category)
       }
@@ -58,9 +80,9 @@ export default function ProductGrid({
       }
       return query
     },
-    [filters, supabase]
+    [filters, search, sortBy, supabase]
   )
-  // Reset and refetch whenever filters change
+  // Reset and refetch whenever filters, search, or sort change
   useEffect(() => {
     let cancelled = false
     setLoading(true)
