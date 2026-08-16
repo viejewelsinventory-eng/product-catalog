@@ -6,12 +6,21 @@ import type { Product } from '@/lib/types'
 import { getProductImageUrl } from '@/lib/types'
 import { useCart } from '@/context/CartContext'
 
-export default function ProductCard({ product }: { product: Product }) {
+export default function ProductCard({
+  product,
+  isAdmin,
+  onOpen,
+}: {
+  product: Product
+  isAdmin: boolean
+  onOpen: () => void
+}) {
   const { addToCart } = useCart()
   const [adding, setAdding] = useState(false)
   const [imgError, setImgError] = useState(false)
 
-  const handleAdd = async () => {
+  const handleAdd = async (e: React.MouseEvent) => {
+    e.stopPropagation()
     setAdding(true)
     await addToCart(product, 1)
     setAdding(false)
@@ -20,15 +29,19 @@ export default function ProductCard({ product }: { product: Product }) {
   const imageUrl = getProductImageUrl(product.drive_file_id)
 
   return (
-    <div className="border border-gray-200 rounded-lg overflow-hidden bg-white flex flex-col hover:shadow-md transition-shadow">
+    <div
+      onClick={onOpen}
+      className="border border-gray-200 rounded-lg overflow-hidden bg-white flex flex-col hover:shadow-md transition-shadow cursor-pointer"
+    >
+      {/* Full image, no cropping */}
       <div className="relative w-full aspect-square bg-gray-100">
         {!imgError ? (
           <Image
             src={imageUrl}
-            alt={product.name}
+            alt={product.sku}
             fill
-            sizes="(max-width: 768px) 50vw, (max-width: 1200px) 25vw, 20vw"
-            className="object-cover"
+            sizes="(max-width: 768px) 50vw, (max-width: 1200px) 33vw, 25vw"
+            className="object-contain"
             onError={() => setImgError(true)}
             unoptimized
           />
@@ -39,21 +52,30 @@ export default function ProductCard({ product }: { product: Product }) {
         )}
       </div>
 
-      <div className="p-3 flex flex-col flex-1">
-        <p className="text-xs text-gray-500 uppercase tracking-wide">
-          {product.brand ?? 'Unbranded'}
-        </p>
-        <h3 className="text-sm font-medium text-gray-900 mt-1 line-clamp-2 flex-1">
-          {product.name}
-        </h3>
-        <p className="text-base font-semibold text-gray-900 mt-2">
-          ${product.price.toFixed(2)}
-        </p>
+      <div className="p-3 flex flex-col gap-1.5">
+        {/* SKU under image, shown to everyone */}
+        <p className="text-sm font-semibold text-gray-900">{product.sku}</p>
+
+        {/* Admin only: file types (tags) available */}
+        {isAdmin && product.tags && product.tags.length > 0 && (
+          <div className="flex flex-wrap gap-1">
+            {product.tags.map((tag) => (
+              <span
+                key={tag}
+                className="text-[10px] px-1.5 py-0.5 rounded bg-gray-100 text-gray-600 border border-gray-200"
+              >
+                {tag}
+              </span>
+            ))}
+          </div>
+        )}
+
+        <p className="text-sm text-gray-700">${product.price.toFixed(2)}</p>
 
         <button
           onClick={handleAdd}
           disabled={adding}
-          className="mt-3 w-full bg-gray-900 text-white text-sm rounded-md py-2 hover:bg-gray-800 disabled:opacity-50"
+          className="mt-1 bg-gray-900 text-white text-xs rounded-md py-2 hover:bg-gray-800 disabled:opacity-50"
         >
           {adding ? 'Adding...' : 'Add to Cart'}
         </button>
