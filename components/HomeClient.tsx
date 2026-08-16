@@ -49,7 +49,7 @@ export default function HomeClient({ profile }: { profile: Profile | null }) {
             onCategoryChange={setCategory}
             onVisibilityChange={setVisibility}
           />
-          <ProductGrid filters={filters} />
+          <ProductGrid filters={filters} isAdmin={isAdmin} />
         </div>
       </div>
     </div>
