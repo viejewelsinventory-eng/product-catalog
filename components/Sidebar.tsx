@@ -36,6 +36,7 @@ const VISIBILITY_OPTIONS: { value: string; label: string }[] = [
   { value: 'admin', label: 'Admin Only' },
   { value: 'registered', label: 'Registered User' },
   { value: 'public', label: 'Main Website' },
+  { value: 'blank', label: 'Blank' },
 ]
 
 export default function Sidebar({
