@@ -3,6 +3,7 @@ import { useEffect, useState, useCallback } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import type { Product } from '@/lib/types'
 import ProductCard from './ProductCard'
+import ProductDetailModal from './ProductDetailModal'
 const PAGE_SIZE = 50
 export type ActiveFilters = {
   category: string | null
@@ -15,8 +16,10 @@ export type ActiveFilters = {
 }
 export default function ProductGrid({
   filters,
+  isAdmin,
 }: {
   filters: ActiveFilters
+  isAdmin: boolean
 }) {
   const supabase = createClient()
   const [products, setProducts] = useState<Product[]>([])
@@ -24,6 +27,7 @@ export default function ProductGrid({
   const [loading, setLoading] = useState(true)
   const [loadingMore, setLoadingMore] = useState(false)
   const [hasMore, setHasMore] = useState(true)
+  const [selectedProduct, setSelectedProduct] = useState<Product | null>(null)
   const buildQuery = useCallback(
     (pageIndex: number) => {
       let query = supabase
@@ -106,9 +110,15 @@ export default function ProductGrid({
   }
   return (
     <div className="flex-1">
-      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
+      {/* Capped at 4 columns, no 5-column tier */}
+      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
         {products.map((product) => (
-          <ProductCard key={product.id} product={product} />
+          <ProductCard
+            key={product.id}
+            product={product}
+            isAdmin={isAdmin}
+            onOpen={() => setSelectedProduct(product)}
+          />
         ))}
       </div>
       {hasMore && (
@@ -121,6 +131,12 @@ export default function ProductGrid({
             {loadingMore ? 'Loading...' : 'Load More'}
           </button>
         </div>
+      )}
+      {selectedProduct && (
+        <ProductDetailModal
+          product={selectedProduct}
+          onClose={() => setSelectedProduct(null)}
+        />
       )}
     </div>
   )
