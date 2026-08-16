@@ -2,7 +2,7 @@
 import { useState } from 'react'
 import Navbar from './Navbar'
 import Sidebar from './Sidebar'
-import ProductGrid, { type ActiveFilters } from './ProductGrid'
+import ProductGrid, { type ActiveFilters, type SortOption } from './ProductGrid'
 import type { Profile } from '@/lib/types'
 export default function HomeClient({ profile }: { profile: Profile | null }) {
   const [types, setTypes] = useState<string[]>([])
@@ -13,6 +13,9 @@ export default function HomeClient({ profile }: { profile: Profile | null }) {
   // Admin-only filters
   const [category, setCategory] = useState<string | null>(null)
   const [visibility, setVisibility] = useState<string | null>(null)
+  // Search + sort
+  const [search, setSearch] = useState('')
+  const [sortBy, setSortBy] = useState<SortOption>('newest')
 
   const isAdmin = profile?.is_admin ?? false
 
@@ -27,7 +30,13 @@ export default function HomeClient({ profile }: { profile: Profile | null }) {
   }
   return (
     <div className="min-h-screen bg-gray-50">
-      <Navbar profile={profile} />
+      <Navbar
+        profile={profile}
+        search={search}
+        onSearchChange={setSearch}
+        sortBy={sortBy}
+        onSortChange={setSortBy}
+      />
       <div className="max-w-7xl mx-auto px-4 py-6">
         <div className="flex flex-col lg:flex-row gap-6">
           <Sidebar
@@ -49,7 +58,12 @@ export default function HomeClient({ profile }: { profile: Profile | null }) {
             onCategoryChange={setCategory}
             onVisibilityChange={setVisibility}
           />
-          <ProductGrid filters={filters} isAdmin={isAdmin} />
+          <ProductGrid
+            filters={filters}
+            isAdmin={isAdmin}
+            search={search}
+            sortBy={sortBy}
+          />
         </div>
       </div>
     </div>
