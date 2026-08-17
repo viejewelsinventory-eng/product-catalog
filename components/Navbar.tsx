@@ -8,18 +8,25 @@ import FAQModal from './FAQModal'
 import ContactModal from './ContactModal'
 import type { Profile } from '@/lib/types'
 import type { SortOption } from './ProductGrid'
+
+const DEFAULT_MAX_PRICE = 1000
+
 export default function Navbar({
   profile,
   search,
   onSearchChange,
   sortBy,
   onSortChange,
+  maxPrice,
+  onPriceChange,
 }: {
   profile: Profile | null
   search: string
   onSearchChange: (value: string) => void
   sortBy: SortOption
   onSortChange: (value: SortOption) => void
+  maxPrice: number | null
+  onPriceChange: (min: number | null, max: number | null) => void
 }) {
   const router = useRouter()
   const supabase = createClient()
@@ -28,6 +35,13 @@ export default function Navbar({
   const [faqOpen, setFaqOpen] = useState(false)
   const [contactOpen, setContactOpen] = useState(false)
   const [logoError, setLogoError] = useState(false)
+  const [sliderValue, setSliderValue] = useState(maxPrice ?? DEFAULT_MAX_PRICE)
+
+  const handleSliderChange = (value: number) => {
+    setSliderValue(value)
+    onPriceChange(null, value)
+  }
+
   const handleLogout = async () => {
     await supabase.auth.signOut()
     router.push('/login')
@@ -51,13 +65,13 @@ export default function Navbar({
           </span>
         </div>
 
-        <div className="flex items-center gap-3 flex-1 max-w-xl min-w-[220px]">
+        <div className="flex flex-wrap items-center gap-3 flex-1 max-w-3xl min-w-[220px]">
           <input
             type="text"
             value={search}
             onChange={(e) => onSearchChange(e.target.value)}
             placeholder="Search by SKU..."
-            className="w-full text-sm border border-gray-300 rounded-md px-3 py-1.5 focus:outline-none focus:ring-2 focus:ring-gray-400"
+            className="flex-1 min-w-[160px] text-sm border border-gray-300 rounded-md px-3 py-1.5 focus:outline-none focus:ring-2 focus:ring-gray-400"
           />
           <select
             value={sortBy}
@@ -69,6 +83,22 @@ export default function Navbar({
             <option value="price_asc">Price: Low to High</option>
             <option value="price_desc">Price: High to Low</option>
           </select>
+
+          {/* Price Range -- moved here from Sidebar */}
+          <div className="flex items-center gap-2 min-w-[180px]">
+            <span className="text-xs text-gray-500 whitespace-nowrap">
+              Up to ${sliderValue}
+            </span>
+            <input
+              type="range"
+              min={0}
+              max={DEFAULT_MAX_PRICE}
+              step={5}
+              value={sliderValue}
+              onChange={(e) => handleSliderChange(Number(e.target.value))}
+              className="w-28 accent-gray-900"
+            />
+          </div>
         </div>
 
         <div className="flex items-center gap-4">
