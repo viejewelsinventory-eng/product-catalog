@@ -67,11 +67,31 @@ export default function Sidebar({
   const [adminCategories, setAdminCategories] = useState<string[]>([])
   const [sliderValue, setSliderValue] = useState(maxPrice ?? DEFAULT_MAX_PRICE)
 
+  // File Types list (fixed set of available tag options) -- loaded once
   useEffect(() => {
-    const loadOptions = async () => {
-      const { data: typeSubData } = await supabase.rpc(
-        'get_type_subcategory_groups'
-      )
+    const loadTags = async () => {
+      const { data: tagData } = await supabase.rpc('get_distinct_tags')
+      if (tagData) {
+        setAllTags((tagData as { tag: string }[]).map((row) => row.tag))
+      }
+    }
+    loadTags()
+  }, [supabase])
+
+  // Type / Sub-type counts -- reloads any time File Types, price, or the
+  // admin Category/Display filters change, so counts always reflect what's
+  // currently filtered. Non-admin viewers are implicitly scoped to
+  // visibility = 'registered', matching what ProductGrid actually queries.
+  useEffect(() => {
+    const loadTypeGroups = async () => {
+      const effectiveVisibility = isAdmin ? selectedVisibility : 'registered'
+      const { data: typeSubData } = await supabase.rpc('get_type_subcategory_groups', {
+        tags_filter: selectedTags.length > 0 ? selectedTags : null,
+        min_price: minPrice,
+        max_price: maxPrice,
+        category_filter: isAdmin ? selectedCategory : null,
+        visibility_filter: effectiveVisibility,
+      })
 
       if (typeSubData) {
         const groups: Record<string, { total: number; subs: Record<string, number> }> = {}
@@ -99,15 +119,10 @@ export default function Sidebar({
           })
         setTypeGroups(sortedGroups)
       }
-
-      const { data: tagData } = await supabase.rpc('get_distinct_tags')
-      if (tagData) {
-        setAllTags((tagData as { tag: string }[]).map((row) => row.tag))
-      }
     }
 
-    loadOptions()
-  }, [supabase])
+    loadTypeGroups()
+  }, [supabase, isAdmin, selectedTags, minPrice, maxPrice, selectedCategory, selectedVisibility])
 
   // Admin-only: load category options, filtered by the selected Display
   // value so only categories that actually exist for that tier show up.
@@ -168,6 +183,9 @@ export default function Sidebar({
     onPriceChange(null, value)
   }
 
+  // Grand total across all types under current filters -- admin-only
+  const grandTotal = Object.values(typeGroups).reduce((sum, info) => sum + info.total, 0)
+
   return (
     <aside className="w-full lg:w-64 flex-shrink-0 space-y-6 lg:sticky lg:top-4 lg:self-start lg:max-h-[calc(100vh-2rem)] lg:overflow-y-auto">
       {/* Price range */}
@@ -190,7 +208,7 @@ export default function Sidebar({
         </div>
       </div>
 
-      {/* Type -> Sub-type (nested), with product counts */}
+      {/* Type -> Sub-type (nested), with live product counts */}
       {Object.keys(typeGroups).length > 0 && (
         <div className="bg-white border border-gray-200 rounded-lg p-4">
           <h3 className="text-sm font-semibold text-gray-900 mb-3">Type</h3>
@@ -246,10 +264,10 @@ export default function Sidebar({
         </div>
       )}
 
-      {/* Tags */}
+      {/* File Types (formerly "Tags") */}
       {allTags.length > 0 && (
         <div className="bg-white border border-gray-200 rounded-lg p-4">
-          <h3 className="text-sm font-semibold text-gray-900 mb-3">Tags</h3>
+          <h3 className="text-sm font-semibold text-gray-900 mb-3">File Types</h3>
           <div className="flex flex-wrap gap-2">
             {allTags.map((tag) => {
               const active = selectedTags.includes(tag)
@@ -271,12 +289,17 @@ export default function Sidebar({
         </div>
       )}
 
-      {/* Admin-only filters: Category + Display/visibility */}
+      {/* Admin-only filters: grand total, Category + Display/visibility */}
       {isAdmin && (
         <div className="bg-amber-50 border border-amber-200 rounded-lg p-4 space-y-4">
-          <h3 className="text-sm font-semibold text-amber-900">
-            Admin Filters
-          </h3>
+          <div className="flex items-center justify-between">
+            <h3 className="text-sm font-semibold text-amber-900">
+              Admin Filters
+            </h3>
+            <span className="text-xs font-medium text-amber-800">
+              Total: {grandTotal}
+            </span>
+          </div>
 
           <div>
             <label className="block text-xs font-medium text-amber-800 mb-1">
