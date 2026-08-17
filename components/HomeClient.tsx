@@ -16,9 +16,7 @@ export default function HomeClient({ profile }: { profile: Profile | null }) {
   // Search + sort
   const [search, setSearch] = useState('')
   const [sortBy, setSortBy] = useState<SortOption>('newest')
-
   const isAdmin = profile?.is_admin ?? false
-
   const filters: ActiveFilters = {
     category: isAdmin ? category : null,
     types,
@@ -28,6 +26,10 @@ export default function HomeClient({ profile }: { profile: Profile | null }) {
     maxPrice,
     visibility: isAdmin ? visibility : 'registered',
   }
+  const handlePriceChange = (min: number | null, max: number | null) => {
+    setMinPrice(min)
+    setMaxPrice(max)
+  }
   return (
     <div className="min-h-screen bg-gray-50">
       <Navbar
@@ -36,6 +38,8 @@ export default function HomeClient({ profile }: { profile: Profile | null }) {
         onSearchChange={setSearch}
         sortBy={sortBy}
         onSortChange={setSortBy}
+        maxPrice={maxPrice}
+        onPriceChange={handlePriceChange}
       />
       <div className="max-w-7xl mx-auto px-4 py-6">
         <div className="flex flex-col lg:flex-row gap-6">
@@ -51,10 +55,7 @@ export default function HomeClient({ profile }: { profile: Profile | null }) {
             onTypesChange={setTypes}
             onSubcategoriesChange={setSubcategories}
             onTagsChange={setTags}
-            onPriceChange={(min, max) => {
-              setMinPrice(min)
-              setMaxPrice(max)
-            }}
+            onPriceChange={handlePriceChange}
             onCategoryChange={setCategory}
             onVisibilityChange={setVisibility}
           />
