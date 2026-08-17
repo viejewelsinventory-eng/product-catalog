@@ -1,16 +1,13 @@
 'use client'
-
 // ============================================
 // EDIT THESE — your real contact details.
 // ============================================
 const CONTACT_INFO = {
   whatsappNumber: '+919619616412', // digits only, include country code, no + or spaces
   email: 'hello.viejewels@gmail.com',
-  }
-
+}
 export default function ContactModal({ onClose }: { onClose: () => void }) {
   const whatsappLink = `https://wa.me/${CONTACT_INFO.whatsappNumber}`
-
   return (
     <div
       className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4"
@@ -30,7 +27,6 @@ export default function ContactModal({ onClose }: { onClose: () => void }) {
             &times;
           </button>
         </div>
-
         <div className="space-y-3 text-sm text-gray-700">
           <div>
             <p className="text-xs text-gray-400 uppercase tracking-wide mb-0.5">Email</p>
@@ -41,17 +37,6 @@ export default function ContactModal({ onClose }: { onClose: () => void }) {
               {CONTACT_INFO.email}
             </a>
           </div>
-
-          <div>
-            <p className="text-xs text-gray-400 uppercase tracking-wide mb-0.5">Phone</p>
-            <p>{CONTACT_INFO.phone}</p>
-          </div>
-
-          <div>
-            <p className="text-xs text-gray-400 uppercase tracking-wide mb-0.5">Hours</p>
-            <p>{CONTACT_INFO.hours}</p>
-          </div>
-
           <a
             href={whatsappLink}
             target="_blank"
