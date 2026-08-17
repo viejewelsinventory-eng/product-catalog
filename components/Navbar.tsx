@@ -38,7 +38,7 @@ export default function Navbar({
             <img
               src="/logo.png"
               alt="Logo"
-              className="h-9 w-auto object-contain"
+              className="h-[4.5rem] w-auto object-contain"
               onError={() => setLogoError(true)}
             />
           )}
