@@ -186,8 +186,38 @@ export default function Sidebar({
   // Grand total across all types under current filters -- admin-only
   const grandTotal = Object.values(typeGroups).reduce((sum, info) => sum + info.total, 0)
 
+  const hasActiveFilters =
+    selectedTypes.length > 0 ||
+    selectedSubcategories.length > 0 ||
+    selectedTags.length > 0 ||
+    minPrice !== null ||
+    maxPrice !== null ||
+    (isAdmin && (selectedCategory !== null || selectedVisibility !== null))
+
+  const clearAllFilters = () => {
+    onTypesChange([])
+    onSubcategoriesChange([])
+    onTagsChange([])
+    onPriceChange(null, null)
+    setSliderValue(DEFAULT_MAX_PRICE)
+    if (isAdmin) {
+      onCategoryChange(null)
+      onVisibilityChange(null)
+    }
+  }
+
   return (
     <aside className="w-full lg:w-64 flex-shrink-0 space-y-6 lg:sticky lg:top-4 lg:self-start lg:max-h-[calc(100vh-2rem)] lg:overflow-y-auto">
+      {hasActiveFilters && (
+        <button
+          type="button"
+          onClick={clearAllFilters}
+          className="w-full text-sm font-medium text-gray-700 border border-gray-300 rounded-lg px-4 py-2 bg-white hover:bg-gray-50"
+        >
+          Clear All Filters
+        </button>
+      )}
+
       {/* Price range */}
       <div className="bg-white border border-gray-200 rounded-lg p-4">
         <h3 className="text-sm font-semibold text-gray-900 mb-3">
