@@ -4,6 +4,8 @@ import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { useCart } from '@/context/CartContext'
 import CartDrawer from './CartDrawer'
+import FAQModal from './FAQModal'
+import ContactModal from './ContactModal'
 import type { Profile } from '@/lib/types'
 import type { SortOption } from './ProductGrid'
 export default function Navbar({
@@ -23,6 +25,8 @@ export default function Navbar({
   const supabase = createClient()
   const { itemCount } = useCart()
   const [cartOpen, setCartOpen] = useState(false)
+  const [faqOpen, setFaqOpen] = useState(false)
+  const [contactOpen, setContactOpen] = useState(false)
   const [logoError, setLogoError] = useState(false)
   const handleLogout = async () => {
     await supabase.auth.signOut()
@@ -74,6 +78,18 @@ export default function Navbar({
             </span>
           )}
           <button
+            onClick={() => setFaqOpen(true)}
+            className="text-sm text-gray-600 hover:text-gray-900"
+          >
+            FAQ
+          </button>
+          <button
+            onClick={() => setContactOpen(true)}
+            className="text-sm text-gray-600 hover:text-gray-900"
+          >
+            Contact Us
+          </button>
+          <button
             onClick={() => setCartOpen(true)}
             className="relative bg-gray-900 text-white text-sm rounded-md px-4 py-2 hover:bg-gray-800"
           >
@@ -97,6 +113,8 @@ export default function Navbar({
         onClose={() => setCartOpen(false)}
         profile={profile}
       />
+      {faqOpen && <FAQModal onClose={() => setFaqOpen(false)} />}
+      {contactOpen && <ContactModal onClose={() => setContactOpen(false)} />}
     </>
   )
 }
