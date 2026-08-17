@@ -4,6 +4,14 @@ import { useState } from 'react'
 import type { Product } from '@/lib/types'
 import { getProductImageUrl } from '@/lib/types'
 import { useCart } from '@/context/CartContext'
+
+const VISIBILITY_LABELS: Record<string, string> = {
+  admin: 'Admin Only',
+  registered: 'Registered User',
+  public: 'Main Website',
+  blank: 'Blank',
+}
+
 export default function ProductCard({
   product,
   isAdmin,
@@ -25,10 +33,12 @@ export default function ProductCard({
   const isBlank = product.visibility === 'blank'
   const imageUrl = getProductImageUrl(product.drive_file_id)
   const displaySrc = isBlank ? '/blank.jpg' : imgError ? '/photo-missing.jpg' : imageUrl
+  const displayLabel = VISIBILITY_LABELS[product.visibility] ?? product.visibility
+
   return (
     <div
       onClick={onOpen}
-      className="border border-gray-200 rounded-lg overflow-hidden bg-white flex flex-col hover:shadow-md transition-shadow cursor-pointer"
+      className="border border-gray-200 rounded-lg overflow-hidden bg-white flex flex-col h-full hover:shadow-md transition-shadow cursor-pointer"
     >
       {/* Full image, no cropping. Blank overrides everything; otherwise fall back to photo-missing on load error */}
       <div className="relative w-full aspect-square bg-gray-100">
@@ -44,23 +54,39 @@ export default function ProductCard({
           unoptimized
         />
       </div>
-      <div className="p-3 flex flex-col gap-1.5">
+
+      <div className="p-3 flex flex-col flex-1 gap-1.5">
         {/* SKU under image, shown to everyone */}
         <p className="text-sm font-semibold text-gray-900">{product.sku}</p>
-        {/* Admin only: file types (tags) available */}
-        {isAdmin && product.tags && product.tags.length > 0 && (
-          <div className="flex flex-wrap gap-1">
-            {product.tags.map((tag) => (
-              <span
-                key={tag}
-                className="text-[10px] px-1.5 py-0.5 rounded bg-gray-100 text-gray-600 border border-gray-200"
-              >
-                {tag}
-              </span>
-            ))}
+
+        {/* Admin only: file types (tags) available -- reserves space even when empty, per spec */}
+        {isAdmin && (
+          <div className="flex flex-wrap gap-1 min-h-[1.25rem]">
+            {product.tags && product.tags.length > 0 &&
+              product.tags.map((tag) => (
+                <span
+                  key={tag}
+                  className="text-[10px] px-1.5 py-0.5 rounded bg-gray-100 text-gray-600 border border-gray-200"
+                >
+                  {tag}
+                </span>
+              ))}
           </div>
         )}
+
         <p className="text-sm text-gray-700">${product.price.toFixed(2)}</p>
+
+        {/* Admin only: Display and Category, stacked underneath each other */}
+        {isAdmin && (
+          <div className="text-xs text-gray-500 space-y-0.5">
+            <p>Display: {displayLabel}</p>
+            <p>Category: {product.category || '—'}</p>
+          </div>
+        )}
+
+        {/* Spacer absorbs leftover height so the button always sits at the same bottom position */}
+        <div className="flex-1" />
+
         <button
           onClick={handleAdd}
           disabled={adding}
