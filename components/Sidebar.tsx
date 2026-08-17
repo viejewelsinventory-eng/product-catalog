@@ -35,8 +35,6 @@ type TypeGroupInfo = {
   subs: { name: string; count: number }[]
 }
 
-const DEFAULT_MAX_PRICE = 1000
-
 const VISIBILITY_OPTIONS: { value: string; label: string }[] = [
   { value: 'admin', label: 'Admin Only' },
   { value: 'registered', label: 'Registered User' },
@@ -65,7 +63,6 @@ export default function Sidebar({
   const [expandedTypes, setExpandedTypes] = useState<Set<string>>(new Set())
   const [allTags, setAllTags] = useState<string[]>([])
   const [adminCategories, setAdminCategories] = useState<string[]>([])
-  const [sliderValue, setSliderValue] = useState(maxPrice ?? DEFAULT_MAX_PRICE)
 
   // File Types list (fixed set of available tag options) -- loaded once
   useEffect(() => {
@@ -178,11 +175,6 @@ export default function Sidebar({
     }
   }
 
-  const handleSliderChange = (value: number) => {
-    setSliderValue(value)
-    onPriceChange(null, value)
-  }
-
   // Grand total across all types under current filters -- admin-only
   const grandTotal = Object.values(typeGroups).reduce((sum, info) => sum + info.total, 0)
 
@@ -199,7 +191,6 @@ export default function Sidebar({
     onSubcategoriesChange([])
     onTagsChange([])
     onPriceChange(null, null)
-    setSliderValue(DEFAULT_MAX_PRICE)
     if (isAdmin) {
       onCategoryChange(null)
       onVisibilityChange(null)
@@ -217,26 +208,6 @@ export default function Sidebar({
           Clear All Filters
         </button>
       )}
-
-      {/* Price range */}
-      <div className="bg-white border border-gray-200 rounded-lg p-4">
-        <h3 className="text-sm font-semibold text-gray-900 mb-3">
-          Price Range
-        </h3>
-        <input
-          type="range"
-          min={0}
-          max={DEFAULT_MAX_PRICE}
-          step={5}
-          value={sliderValue}
-          onChange={(e) => handleSliderChange(Number(e.target.value))}
-          className="w-full accent-gray-900"
-        />
-        <div className="flex justify-between text-xs text-gray-500 mt-1">
-          <span>$0</span>
-          <span>Up to ${sliderValue}</span>
-        </div>
-      </div>
 
       {/* Type -> Sub-type (nested), with live product counts */}
       {Object.keys(typeGroups).length > 0 && (
