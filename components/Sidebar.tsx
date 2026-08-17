@@ -30,6 +30,11 @@ type SidebarProps = {
   onVisibilityChange: (value: string | null) => void
 }
 
+type TypeGroupInfo = {
+  total: number
+  subs: { name: string; count: number }[]
+}
+
 const DEFAULT_MAX_PRICE = 1000
 
 const VISIBILITY_OPTIONS: { value: string; label: string }[] = [
@@ -56,7 +61,7 @@ export default function Sidebar({
   onVisibilityChange,
 }: SidebarProps) {
   const supabase = createClient()
-  const [typeGroups, setTypeGroups] = useState<Record<string, string[]>>({})
+  const [typeGroups, setTypeGroups] = useState<Record<string, TypeGroupInfo>>({})
   const [expandedTypes, setExpandedTypes] = useState<Set<string>>(new Set())
   const [allTags, setAllTags] = useState<string[]>([])
   const [adminCategories, setAdminCategories] = useState<string[]>([])
@@ -69,17 +74,28 @@ export default function Sidebar({
       )
 
       if (typeSubData) {
-        const groups: Record<string, Set<string>> = {}
-        for (const row of typeSubData as { type: string; subcategory: string | null }[]) {
+        const groups: Record<string, { total: number; subs: Record<string, number> }> = {}
+        for (const row of typeSubData as {
+          type: string
+          subcategory: string | null
+          product_count: number
+        }[]) {
           if (!row.type) continue
-          if (!groups[row.type]) groups[row.type] = new Set()
-          if (row.subcategory) groups[row.type].add(row.subcategory)
+          if (!groups[row.type]) groups[row.type] = { total: 0, subs: {} }
+          groups[row.type].total += Number(row.product_count)
+          if (row.subcategory) {
+            groups[row.type].subs[row.subcategory] =
+              (groups[row.type].subs[row.subcategory] || 0) + Number(row.product_count)
+          }
         }
-        const sortedGroups: Record<string, string[]> = {}
+        const sortedGroups: Record<string, TypeGroupInfo> = {}
         Object.keys(groups)
           .sort()
           .forEach((type) => {
-            sortedGroups[type] = Array.from(groups[type]).sort()
+            const subsArr = Object.entries(groups[type].subs)
+              .map(([name, count]) => ({ name, count }))
+              .sort((a, b) => a.name.localeCompare(b.name))
+            sortedGroups[type] = { total: groups[type].total, subs: subsArr }
           })
         setTypeGroups(sortedGroups)
       }
@@ -174,12 +190,12 @@ export default function Sidebar({
         </div>
       </div>
 
-      {/* Type -> Sub-type (nested) */}
+      {/* Type -> Sub-type (nested), with product counts */}
       {Object.keys(typeGroups).length > 0 && (
         <div className="bg-white border border-gray-200 rounded-lg p-4">
           <h3 className="text-sm font-semibold text-gray-900 mb-3">Type</h3>
           <div className="space-y-1 max-h-96 overflow-y-auto">
-            {Object.entries(typeGroups).map(([type, subs]) => {
+            {Object.entries(typeGroups).map(([type, info]) => {
               const isExpanded = expandedTypes.has(type)
               return (
                 <div key={type} className="border-b border-gray-100 last:border-0 pb-1">
@@ -190,7 +206,7 @@ export default function Sidebar({
                       className="text-gray-400 hover:text-gray-700 w-4 text-xs"
                       aria-label={isExpanded ? 'Collapse' : 'Expand'}
                     >
-                      {subs.length > 0 ? (isExpanded ? '▾' : '▸') : ''}
+                      {info.subs.length > 0 ? (isExpanded ? '▾' : '▸') : ''}
                     </button>
                     <label className="flex items-center gap-2 text-sm text-gray-800 cursor-pointer flex-1">
                       <input
@@ -199,24 +215,26 @@ export default function Sidebar({
                         onChange={() => toggleType(type)}
                         className="accent-gray-900"
                       />
-                      {type}
+                      <span className="flex-1">{type}</span>
+                      <span className="text-xs text-gray-400">({info.total})</span>
                     </label>
                   </div>
 
-                  {isExpanded && subs.length > 0 && (
+                  {isExpanded && info.subs.length > 0 && (
                     <div className="ml-8 space-y-1 mt-1">
-                      {subs.map((sub) => (
+                      {info.subs.map((sub) => (
                         <label
-                          key={sub}
+                          key={sub.name}
                           className="flex items-center gap-2 text-sm text-gray-600 cursor-pointer"
                         >
                           <input
                             type="checkbox"
-                            checked={selectedSubcategories.includes(sub)}
-                            onChange={() => toggleSubcategory(sub)}
+                            checked={selectedSubcategories.includes(sub.name)}
+                            onChange={() => toggleSubcategory(sub.name)}
                             className="accent-gray-900"
                           />
-                          {sub}
+                          <span className="flex-1">{sub.name}</span>
+                          <span className="text-xs text-gray-400">({sub.count})</span>
                         </label>
                       ))}
                     </div>
