@@ -9,7 +9,7 @@ const FAQ_ITEMS: { question: string; answer: string }[] = [
   {
     question: 'How do I place an order?',
     answer:
-      'Browse the catalog, add items to your cart, then click Checkout. Your order details will be sent to us via WhatsApp, and we\'ll follow up to confirm payment and delivery.',
+      'Browse the catalog, add items to your cart, then click Checkout. Your order details will be sent to us via WhatsApp and we\'ll follow up to confirm your order, offer disounts(wherver applicable) and provide you with payment and delivery details.',
   },
   {
     question: 'What file types are available for each design?',
@@ -19,12 +19,24 @@ const FAQ_ITEMS: { question: string; answer: string }[] = [
   {
     question: 'How do I pay?',
     answer:
-      'Payment is handled manually after checkout — we\'ll confirm payment details with you directly over WhatsApp.',
+      'Payment is handled manually after checkout — we\'ll confirm and provide payment options with you directly over WhatsApp.',
   },
   {
     question: 'Can I request a custom design?',
     answer:
-      'Yes — reach out via the Contact Us section and let us know what you\'re looking for.',
+      'Yes — reach out via the Contact Us section and let us know what you\'re looking for. We will custom create designs based on your preference, details and budget provided.',
+  },
+  {
+    question: 'Can I reuest Renderd Images, Animation videos?',
+    answer: 'Yes, we can provide high quality rendered images as well as high definition videos.',
+  },
+  {
+    question: 'Can you manufacture jewelry?',
+    answer: 'Yes, we do provide jewelry manufacturing including diamonds and stones of your preference with a high quality',
+  },
+  {
+    question: 'Is there any discount for purchasing files and / or ordering jewelry from you?',
+    answer: 'Yes, we offer discounted rates for bulk orders',
   },
 ]
 
