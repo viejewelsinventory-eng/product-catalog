@@ -2,9 +2,11 @@
 
 import { useState } from 'react'
 import { useCart } from '@/context/CartContext'
+import { useCurrency } from '@/context/CurrencyContext'
 import { createClient } from '@/lib/supabase/client'
 import { buildWhatsAppCheckoutLink } from '@/lib/whatsapp'
 import { getProductImageUrl } from '@/lib/types'
+import { formatPrice } from '@/lib/currency'
 import type { Profile } from '@/lib/types'
 
 type CartDrawerProps = {
@@ -20,6 +22,7 @@ export default function CartDrawer({
 }: CartDrawerProps) {
   const { items, cartId, removeFromCart, updateQuantity, clearCart, refreshCart } =
     useCart()
+  const { currency } = useCurrency()
   const supabase = createClient()
   const [checkingOut, setCheckingOut] = useState(false)
 
@@ -32,7 +35,13 @@ export default function CartDrawer({
     if (!cartId || items.length === 0) return
     setCheckingOut(true)
 
-    const whatsappUrl = buildWhatsAppCheckoutLink(items, profile)
+    const {
+      data: { user },
+    } = await supabase.auth.getUser()
+    const email = user?.email ?? null
+    const siteOrigin = window.location.origin
+
+    const whatsappUrl = buildWhatsAppCheckoutLink(items, profile, email, siteOrigin)
 
     const { error } = await supabase
       .from('carts')
@@ -98,7 +107,7 @@ export default function CartDrawer({
                   {item.product.name}
                 </p>
                 <p className="text-xs text-gray-500">
-                  ${item.product.price.toFixed(2)} each
+                  {formatPrice(item.product.price, currency)} each
                 </p>
 
                 <div className="flex items-center gap-2 mt-2">
@@ -134,7 +143,7 @@ export default function CartDrawer({
           <div className="border-t border-gray-200 px-4 py-4 space-y-3">
             <div className="flex justify-between text-sm font-medium text-gray-900">
               <span>Total</span>
-              <span>${total.toFixed(2)}</span>
+              <span>{formatPrice(total, currency)}</span>
             </div>
             <button
               onClick={handleCheckout}
