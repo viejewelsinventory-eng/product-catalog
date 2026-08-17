@@ -4,11 +4,9 @@
 // EDIT THESE — your real contact details.
 // ============================================
 const CONTACT_INFO = {
-  whatsappNumber: '1234567890', // digits only, include country code, no + or spaces
-  email: 'hello@example.com',
-  phone: '+1 (234) 567-890',
-  hours: 'Mon–Sat, 9:00 AM – 6:00 PM',
-}
+  whatsappNumber: '+919619616412', // digits only, include country code, no + or spaces
+  email: 'hello.viejewels@gmail.com',
+  }
 
 export default function ContactModal({ onClose }: { onClose: () => void }) {
   const whatsappLink = `https://wa.me/${CONTACT_INFO.whatsappNumber}`
