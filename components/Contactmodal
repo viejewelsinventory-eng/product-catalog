@@ -1,0 +1,69 @@
+'use client'
+
+// ============================================
+// EDIT THESE — your real contact details.
+// ============================================
+const CONTACT_INFO = {
+  whatsappNumber: '1234567890', // digits only, include country code, no + or spaces
+  email: 'hello@example.com',
+  phone: '+1 (234) 567-890',
+  hours: 'Mon–Sat, 9:00 AM – 6:00 PM',
+}
+
+export default function ContactModal({ onClose }: { onClose: () => void }) {
+  const whatsappLink = `https://wa.me/${CONTACT_INFO.whatsappNumber}`
+
+  return (
+    <div
+      className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4"
+      onClick={onClose}
+    >
+      <div
+        className="bg-white rounded-lg max-w-md w-full p-6"
+        onClick={(e) => e.stopPropagation()}
+      >
+        <div className="flex justify-between items-start mb-4">
+          <h2 className="text-lg font-semibold text-gray-900">Contact Us</h2>
+          <button
+            onClick={onClose}
+            className="text-gray-400 hover:text-gray-700 text-xl leading-none"
+            aria-label="Close"
+          >
+            &times;
+          </button>
+        </div>
+
+        <div className="space-y-3 text-sm text-gray-700">
+          <div>
+            <p className="text-xs text-gray-400 uppercase tracking-wide mb-0.5">Email</p>
+            <a
+              href={`mailto:${CONTACT_INFO.email}`}
+              className="text-gray-900 hover:underline"
+            >
+              {CONTACT_INFO.email}
+            </a>
+          </div>
+
+          <div>
+            <p className="text-xs text-gray-400 uppercase tracking-wide mb-0.5">Phone</p>
+            <p>{CONTACT_INFO.phone}</p>
+          </div>
+
+          <div>
+            <p className="text-xs text-gray-400 uppercase tracking-wide mb-0.5">Hours</p>
+            <p>{CONTACT_INFO.hours}</p>
+          </div>
+
+          <a
+            href={whatsappLink}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="block text-center bg-gray-900 text-white text-sm rounded-md py-2 mt-4 hover:bg-gray-800"
+          >
+            Message us on WhatsApp
+          </a>
+        </div>
+      </div>
+    </div>
+  )
+}
