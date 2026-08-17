@@ -23,6 +23,7 @@ export default function Navbar({
   const supabase = createClient()
   const { itemCount } = useCart()
   const [cartOpen, setCartOpen] = useState(false)
+  const [logoError, setLogoError] = useState(false)
   const handleLogout = async () => {
     await supabase.auth.signOut()
     router.push('/login')
@@ -31,8 +32,19 @@ export default function Navbar({
   return (
     <>
       <nav className="sticky top-0 z-40 bg-white border-b border-gray-200 px-4 py-3 flex flex-wrap items-center justify-between gap-3">
-        <div className="text-lg font-semibold text-gray-900">
-          Product Catalog
+        <div className="flex items-center gap-2">
+          {/* Upload your logo file to public/logo.png in GitHub -- falls back to text until then */}
+          {!logoError && (
+            <img
+              src="/logo.png"
+              alt="Logo"
+              className="h-9 w-auto object-contain"
+              onError={() => setLogoError(true)}
+            />
+          )}
+          <span className="text-lg font-semibold text-gray-900">
+            Product Catalog
+          </span>
         </div>
 
         <div className="flex items-center gap-3 flex-1 max-w-xl min-w-[220px]">
