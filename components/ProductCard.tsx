@@ -4,14 +4,14 @@ import { useState } from 'react'
 import type { Product } from '@/lib/types'
 import { getProductImageUrl } from '@/lib/types'
 import { useCart } from '@/context/CartContext'
-
+import { useCurrency } from '@/context/CurrencyContext'
+import { formatPrice } from '@/lib/currency'
 const VISIBILITY_LABELS: Record<string, string> = {
   admin: 'Admin Only',
   registered: 'Registered User',
   public: 'Main Website',
   blank: 'Blank',
 }
-
 export default function ProductCard({
   product,
   isAdmin,
@@ -22,6 +22,7 @@ export default function ProductCard({
   onOpen: () => void
 }) {
   const { addToCart } = useCart()
+  const { currency } = useCurrency()
   const [adding, setAdding] = useState(false)
   const [imgError, setImgError] = useState(false)
   const handleAdd = async (e: React.MouseEvent) => {
@@ -34,7 +35,6 @@ export default function ProductCard({
   const imageUrl = getProductImageUrl(product.drive_file_id)
   const displaySrc = isBlank ? '/blank.jpg' : imgError ? '/photo-missing.jpg' : imageUrl
   const displayLabel = VISIBILITY_LABELS[product.visibility] ?? product.visibility
-
   return (
     <div
       onClick={onOpen}
@@ -54,11 +54,9 @@ export default function ProductCard({
           unoptimized
         />
       </div>
-
       <div className="p-3 flex flex-col flex-1 gap-1.5">
         {/* SKU under image, shown to everyone */}
         <p className="text-sm font-semibold text-gray-900">{product.sku}</p>
-
         {/* Admin only: file types (tags) available -- reserves space even when empty, per spec */}
         {isAdmin && (
           <div className="flex flex-wrap gap-1 min-h-[1.25rem]">
@@ -73,9 +71,7 @@ export default function ProductCard({
               ))}
           </div>
         )}
-
-        <p className="text-sm text-gray-700">${product.price.toFixed(2)}</p>
-
+        <p className="text-sm text-gray-700">{formatPrice(product.price, currency)}</p>
         {/* Admin only: Display and Category, stacked underneath each other */}
         {isAdmin && (
           <div className="text-xs text-gray-500 space-y-0.5">
@@ -83,10 +79,8 @@ export default function ProductCard({
             <p>Category: {product.category || '—'}</p>
           </div>
         )}
-
         {/* Spacer absorbs leftover height so the button always sits at the same bottom position */}
         <div className="flex-1" />
-
         <button
           onClick={handleAdd}
           disabled={adding}
