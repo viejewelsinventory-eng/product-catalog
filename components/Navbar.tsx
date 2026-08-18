@@ -3,6 +3,7 @@ import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { useCart } from '@/context/CartContext'
+import { useCurrency } from '@/context/CurrencyContext'
 import CartDrawer from './CartDrawer'
 import FAQModal from './FAQModal'
 import ContactModal from './ContactModal'
@@ -31,6 +32,7 @@ export default function Navbar({
   const router = useRouter()
   const supabase = createClient()
   const { itemCount } = useCart()
+  const { currency, toggleCurrency } = useCurrency()
   const [cartOpen, setCartOpen] = useState(false)
   const [faqOpen, setFaqOpen] = useState(false)
   const [contactOpen, setContactOpen] = useState(false)
@@ -99,6 +101,29 @@ export default function Navbar({
               className="w-28 accent-gray-900"
             />
           </div>
+
+          {/* Currency toggle */}
+          <button
+            type="button"
+            onClick={toggleCurrency}
+            className="flex items-center text-xs font-medium border border-gray-300 rounded-md overflow-hidden flex-shrink-0"
+            aria-label="Toggle currency"
+          >
+            <span
+              className={`px-2 py-1.5 ${
+                currency === 'USD' ? 'bg-gray-900 text-white' : 'bg-white text-gray-600'
+              }`}
+            >
+              $ USD
+            </span>
+            <span
+              className={`px-2 py-1.5 ${
+                currency === 'INR' ? 'bg-gray-900 text-white' : 'bg-white text-gray-600'
+              }`}
+            >
+              ₹ INR
+            </span>
+          </button>
         </div>
 
         <div className="flex items-center gap-4">
