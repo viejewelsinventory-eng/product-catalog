@@ -41,7 +41,7 @@ export default function CartDrawer({
     const email = user?.email ?? null
     const siteOrigin = window.location.origin
 
-    const whatsappUrl = buildWhatsAppCheckoutLink(items, profile, email, siteOrigin)
+    const whatsappUrl = buildWhatsAppCheckoutLink(items, profile, email, siteOrigin, rate)
 
     const { error } = await supabase
       .from('carts')
