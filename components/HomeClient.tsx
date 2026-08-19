@@ -38,8 +38,6 @@ export default function HomeClient({ profile }: { profile: Profile | null }) {
         onSearchChange={setSearch}
         sortBy={sortBy}
         onSortChange={setSortBy}
-        maxPrice={maxPrice}
-        onPriceChange={handlePriceChange}
       />
       <div className="max-w-7xl mx-auto px-4 py-6">
         <div className="flex flex-col lg:flex-row gap-6">
