@@ -1,81 +1,53 @@
-'use client';
-
-import { useEffect, useState } from 'react';
-import { createClient } from '@/lib/supabase/client';
+'use client'
+import { useState } from 'react'
+import { useCurrency } from '@/context/CurrencyContext'
 
 // NOTE: this page assumes it's already behind your admin auth/middleware.
 // If you don't have that yet, protect this route (e.g. in middleware.ts) so only
 // users with profiles.is_admin = true can reach /admin/*.
 
 export default function CurrencyAdminPage() {
-  const [rate, setRate] = useState('');
-  const [updatedAt, setUpdatedAt] = useState<string | null>(null);
-  const [saving, setSaving] = useState(false);
-  const [message, setMessage] = useState('');
-
-  const supabase = createClient();
-
-  useEffect(() => {
-    async function load() {
-      const { data } = await supabase
-        .from('currency_settings')
-        .select('usd_to_inr_rate, updated_at')
-        .eq('id', 1)
-        .single();
-
-      if (data) {
-        setRate(String(data.usd_to_inr_rate));
-        setUpdatedAt(data.updated_at);
-      }
-    }
-    load();
-  }, []);
+  const { rate, refreshRate } = useCurrency()
+  const [input, setInput] = useState(String(rate))
+  const [saving, setSaving] = useState(false)
+  const [message, setMessage] = useState('')
 
   async function handleSave() {
-    const parsed = parseFloat(rate);
+    const parsed = parseFloat(input)
     if (!parsed || parsed <= 0) {
-      setMessage('Enter a valid rate greater than 0.');
-      return;
+      setMessage('Enter a valid rate greater than 0.')
+      return
     }
 
-    setSaving(true);
-    setMessage('');
+    setSaving(true)
+    setMessage('')
 
-    const { data: userData } = await supabase.auth.getUser();
+    const success = await refreshRate(parsed)
 
-    const { error } = await supabase
-      .from('currency_settings')
-      .update({
-        usd_to_inr_rate: parsed,
-        updated_at: new Date().toISOString(),
-        updated_by: userData?.user?.id,
-      })
-      .eq('id', 1);
-
-    setSaving(false);
-
-    if (error) {
-      setMessage(`Error: ${error.message}`);
-    } else {
-      setMessage('Rate updated — all product prices on the storefront now reflect it.');
-      setUpdatedAt(new Date().toISOString());
-    }
+    setSaving(false)
+    setMessage(
+      success
+        ? 'Rate updated — all product prices on the storefront now reflect it.'
+        : 'Something went wrong saving the rate. Check the console for details.'
+    )
   }
 
   return (
     <div className="max-w-md mx-auto p-6">
       <h1 className="text-xl font-semibold mb-1">Currency rate</h1>
       <p className="text-sm text-gray-500 mb-4">
-        Set the manual USD/INR conversion rate used across the storefront.
+        Set the manual USD → INR conversion rate used across the storefront.
       </p>
 
-      <label className="block text-sm text-gray-600 mb-1">1 USD = ? INR</label>
+      <label className="block text-sm text-gray-600 mb-1">
+        Current rate: 1 USD = {rate} INR
+      </label>
       <input
         type="number"
         step="0.01"
         min="0"
-        value={rate}
-        onChange={(e) => setRate(e.target.value)}
+        value={input}
+        onChange={(e) => setInput(e.target.value)}
         className="border rounded-md px-3 py-2 w-full mb-3"
       />
 
@@ -88,11 +60,6 @@ export default function CurrencyAdminPage() {
       </button>
 
       {message && <p className="mt-3 text-sm">{message}</p>}
-      {updatedAt && (
-        <p className="mt-2 text-xs text-gray-400">
-          Last updated: {new Date(updatedAt).toLocaleString()}
-        </p>
-      )}
     </div>
-  );
+  )
 }
