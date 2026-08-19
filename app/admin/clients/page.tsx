@@ -91,10 +91,11 @@ export default function ClientManagementPage() {
 
   const filteredClients = clients.filter((c) => {
     const q = search.toLowerCase()
+    if (!q) return true
     return (
-      c.full_name?.toLowerCase().includes(q) ||
-      c.phone_number?.toLowerCase().includes(q) ||
-      c.company_name?.toLowerCase().includes(q)
+      (c.full_name ?? '').toLowerCase().includes(q) ||
+      (c.phone_number ?? '').toLowerCase().includes(q) ||
+      (c.company_name ?? '').toLowerCase().includes(q)
     )
   })
 
