@@ -3,6 +3,7 @@ import { useState } from 'react'
 import Navbar from './Navbar'
 import Sidebar from './Sidebar'
 import ProductGrid, { type ActiveFilters, type SortOption } from './ProductGrid'
+import AdminCurrencyRateBox from './AdminCurrencyRateBox'
 import type { Profile } from '@/lib/types'
 export default function HomeClient({ profile }: { profile: Profile | null }) {
   const [types, setTypes] = useState<string[]>([])
@@ -39,6 +40,7 @@ export default function HomeClient({ profile }: { profile: Profile | null }) {
         sortBy={sortBy}
         onSortChange={setSortBy}
       />
+      {isAdmin && <AdminCurrencyRateBox />}
       <div className="max-w-7xl mx-auto px-4 py-6">
         <div className="flex flex-col lg:flex-row gap-6">
           <Sidebar
