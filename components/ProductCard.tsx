@@ -22,7 +22,7 @@ export default function ProductCard({
   onOpen: () => void
 }) {
   const { addToCart } = useCart()
-  const { currency } = useCurrency()
+  const { currency, rate } = useCurrency()
   const [adding, setAdding] = useState(false)
   const [imgError, setImgError] = useState(false)
   const handleAdd = async (e: React.MouseEvent) => {
@@ -71,7 +71,7 @@ export default function ProductCard({
               ))}
           </div>
         )}
-        <p className="text-sm text-gray-700">{formatPrice(product.price, currency)}</p>
+        <p className="text-sm text-gray-700">{formatPrice(product.price, currency, rate)}</p>
         {/* Admin only: Display and Category, stacked underneath each other */}
         {isAdmin && (
           <div className="text-xs text-gray-500 space-y-0.5">
