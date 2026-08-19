@@ -1,5 +1,5 @@
 'use client'
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useCurrency } from '@/context/CurrencyContext'
 
 // NOTE: this page assumes it's already behind your admin auth/middleware.
@@ -9,6 +9,12 @@ import { useCurrency } from '@/context/CurrencyContext'
 export default function CurrencyAdminPage() {
   const { rate, refreshRate } = useCurrency()
   const [input, setInput] = useState(String(rate))
+
+  // The context starts with a fallback rate and loads the real one from the
+  // database a moment later — keep the input in sync once that happens.
+  useEffect(() => {
+    setInput(String(rate))
+  }, [rate])
   const [saving, setSaving] = useState(false)
   const [message, setMessage] = useState('')
 
