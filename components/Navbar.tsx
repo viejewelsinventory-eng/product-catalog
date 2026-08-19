@@ -1,5 +1,6 @@
 'use client'
 import { useState } from 'react'
+import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { useCart } from '@/context/CartContext'
@@ -30,6 +31,7 @@ export default function Navbar({
   const [faqOpen, setFaqOpen] = useState(false)
   const [contactOpen, setContactOpen] = useState(false)
   const [logoError, setLogoError] = useState(false)
+  const isAdmin = profile?.is_admin ?? false
   const handleLogout = async () => {
     await supabase.auth.signOut()
     router.push('/login')
@@ -86,6 +88,14 @@ export default function Navbar({
             <span className="hidden sm:inline text-sm text-gray-600">
               Hi, {profile.full_name}
             </span>
+          )}
+          {isAdmin && (
+            <Link
+              href="/admin/clients"
+              className="text-sm text-gray-600 hover:text-gray-900"
+            >
+              Client Management
+            </Link>
           )}
           <button
             onClick={() => setFaqOpen(true)}
