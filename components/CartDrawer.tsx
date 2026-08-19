@@ -22,7 +22,7 @@ export default function CartDrawer({
 }: CartDrawerProps) {
   const { items, cartId, removeFromCart, updateQuantity, clearCart, refreshCart } =
     useCart()
-  const { currency } = useCurrency()
+  const { currency, rate } = useCurrency()
   const supabase = createClient()
   const [checkingOut, setCheckingOut] = useState(false)
 
@@ -107,7 +107,7 @@ export default function CartDrawer({
                   {item.product.name}
                 </p>
                 <p className="text-xs text-gray-500">
-                  {formatPrice(item.product.price, currency)} each
+                  {formatPrice(item.product.price, currency, rate)} each
                 </p>
 
                 <div className="flex items-center gap-2 mt-2">
@@ -143,7 +143,7 @@ export default function CartDrawer({
           <div className="border-t border-gray-200 px-4 py-4 space-y-3">
             <div className="flex justify-between text-sm font-medium text-gray-900">
               <span>Total</span>
-              <span>{formatPrice(total, currency)}</span>
+              <span>{formatPrice(total, currency, rate)}</span>
             </div>
             <button
               onClick={handleCheckout}
