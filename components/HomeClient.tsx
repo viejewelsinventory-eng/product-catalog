@@ -1,71 +1,69 @@
 'use client'
 import { useState } from 'react'
-import Navbar from './Navbar'
-import Sidebar from './Sidebar'
-import ProductGrid, { type ActiveFilters, type SortOption } from './ProductGrid'
-import AdminCurrencyRateBox from './AdminCurrencyRateBox'
-import type { Profile } from '@/lib/types'
-export default function HomeClient({ profile }: { profile: Profile | null }) {
-  const [types, setTypes] = useState<string[]>([])
-  const [subcategories, setSubcategories] = useState<string[]>([])
-  const [tags, setTags] = useState<string[]>([])
-  const [minPrice, setMinPrice] = useState<number | null>(null)
-  const [maxPrice, setMaxPrice] = useState<number | null>(null)
-  // Admin-only filters
-  const [category, setCategory] = useState<string | null>(null)
-  const [visibility, setVisibility] = useState<string | null>(null)
-  // Search + sort
-  const [search, setSearch] = useState('')
-  const [sortBy, setSortBy] = useState<SortOption>('newest')
-  const isAdmin = profile?.is_admin ?? false
-  const filters: ActiveFilters = {
-    category: isAdmin ? category : null,
-    types,
-    subcategories,
-    tags,
-    minPrice,
-    maxPrice,
-    visibility: isAdmin ? visibility : 'registered',
+
+type SyncResponse =
+  | { status: 'synced'; rowsUpdated: number; imagesUpdated: number }
+  | {
+      status: 'backfill_in_progress'
+      sheetRowsProcessedSoFar: string
+      sheetDone: boolean
+      driveDone: boolean
+      message: string
+    }
+  | { error: string }
+
+// Inline, admin-only catalog sync control. Render this conditionally
+// wherever isAdmin is true.
+export default function AdminRefreshCatalogButton() {
+  const [syncing, setSyncing] = useState(false)
+  const [message, setMessage] = useState('')
+
+  async function handleSync() {
+    setSyncing(true)
+    setMessage('')
+
+    try {
+      const res = await fetch('/api/admin/sync-catalog', { method: 'POST' })
+      const data: SyncResponse = await res.json()
+
+      if ('error' in data) {
+        setMessage(`Error: ${data.error}`)
+        setSyncing(false)
+        return
+      }
+
+      if (data.status === 'backfill_in_progress') {
+        setMessage(
+          `Backfill still running (${data.sheetRowsProcessedSoFar} rows processed so far). ${data.message}`
+        )
+        setSyncing(false)
+        return
+      }
+
+      setMessage(
+        `Synced ${data.rowsUpdated} changed rows, ${data.imagesUpdated} changed images. Reloading...`
+      )
+      setTimeout(() => window.location.reload(), 1200)
+    } catch {
+      setMessage('Sync request failed.')
+      setSyncing(false)
+    }
   }
-  const handlePriceChange = (min: number | null, max: number | null) => {
-    setMinPrice(min)
-    setMaxPrice(max)
-  }
+
   return (
-    <div className="min-h-screen bg-gray-50">
-      <Navbar
-        profile={profile}
-        search={search}
-        onSearchChange={setSearch}
-        sortBy={sortBy}
-        onSortChange={setSortBy}
-      />
-      {isAdmin && <AdminCurrencyRateBox />}
-      <div className="max-w-7xl mx-auto px-4 py-6">
-        <div className="flex flex-col lg:flex-row gap-6">
-          <Sidebar
-            isAdmin={isAdmin}
-            selectedTypes={types}
-            selectedSubcategories={subcategories}
-            selectedTags={tags}
-            minPrice={minPrice}
-            maxPrice={maxPrice}
-            selectedCategory={category}
-            selectedVisibility={visibility}
-            onTypesChange={setTypes}
-            onSubcategoriesChange={setSubcategories}
-            onTagsChange={setTags}
-            onPriceChange={handlePriceChange}
-            onCategoryChange={setCategory}
-            onVisibilityChange={setVisibility}
-          />
-          <ProductGrid
-            filters={filters}
-            isAdmin={isAdmin}
-            search={search}
-            sortBy={sortBy}
-          />
-        </div>
+    <div className="max-w-7xl mx-auto px-4 pt-4">
+      <div className="border border-blue-200 bg-blue-50 rounded-lg px-4 py-3 flex flex-wrap items-center gap-3">
+        <span className="text-xs font-semibold text-blue-800 uppercase tracking-wide">
+          Admin: Catalog Sync
+        </span>
+        <button
+          onClick={handleSync}
+          disabled={syncing}
+          className="bg-gray-900 text-white text-xs rounded-md px-3 py-1.5 hover:bg-gray-800 disabled:opacity-50"
+        >
+          {syncing ? 'Checking…' : 'Refresh Catalog'}
+        </button>
+        {message && <span className="text-xs text-gray-700">{message}</span>}
       </div>
     </div>
   )
