@@ -20,7 +20,7 @@ export default function AdminPriceIssuesPanel() {
       .from('products')
       .select('id, sku, price')
       .eq('visibility', 'registered')
-      .or('price.is.null,price.lt.1')
+      .or('price.is.null,price.lte.0')
       .order('sku', { ascending: true })
 
     if (error) {
@@ -67,7 +67,7 @@ export default function AdminPriceIssuesPanel() {
           </button>
         </div>
         <p className="text-xs text-red-700 mb-2">
-          These SKUs are visible to registered users but are missing a price or priced under $1.
+          These SKUs are visible to registered users but are missing a price or priced at $0 or below.
         </p>
         <div className="max-h-48 overflow-y-auto space-y-1">
           {issues.map((p) => (
