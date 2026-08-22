@@ -44,7 +44,7 @@ export function buildWhatsAppCheckoutLink(
     lines.push('')
   })
   const grandTotal = items.reduce(
-    (sum, item) => sum + item.product.price * item.quantity,
+      (sum, item) => sum + (item.product.price ?? 0) * item.quantity,
     0
   )
   lines.push(`*Total: ${formatUSD(grandTotal)} / ${formatINR(grandTotal, rate)}*`)
