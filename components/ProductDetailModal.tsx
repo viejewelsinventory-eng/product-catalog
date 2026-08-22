@@ -3,6 +3,7 @@ import Image from 'next/image'
 import { useState } from 'react'
 import type { Product } from '@/lib/types'
 import { getProductImageUrl } from '@/lib/types'
+import { formatUSD } from '@/lib/currency'
 const ALL_FILE_TYPES = ['3DM', '3DM (Mesh with diamonds)', 'JCD', 'MGX', 'STL']
 export default function ProductDetailModal({
   product,
@@ -51,7 +52,7 @@ export default function ProductDetailModal({
               &times;
             </button>
           </div>
-          <p className="text-gray-700">${product.price.toFixed(2)}</p>
+          <p className="text-gray-700">{formatUSD(product.price)}</p>
           <div>
             <h3 className="text-sm font-semibold text-gray-900 mb-2">
               File types available
