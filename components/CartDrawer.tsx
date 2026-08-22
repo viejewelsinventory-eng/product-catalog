@@ -27,9 +27,9 @@ export default function CartDrawer({
   const [checkingOut, setCheckingOut] = useState(false)
 
   const total = items.reduce(
-    (sum, item) => sum + item.product.price * item.quantity,
-    0
-  )
+  (sum, item) => sum + (item.product.price ?? 0) * item.quantity,
+  0
+)
 
   const handleCheckout = async () => {
     if (!cartId || items.length === 0) return
