@@ -1,29 +1,28 @@
-// ============================================
-// Currency conversion — USD is the source of truth (all prices in the
-// database are stored in USD). The conversion rate is admin-editable and
-// lives in Supabase (`app_settings.usd_to_inr_rate`), loaded and updated
-// via CurrencyContext — these functions just take it as a parameter.
-// ============================================
 export type Currency = 'USD' | 'INR'
 
 export function toINR(usdAmount: number, rate: number): number {
   return usdAmount * rate
 }
 
-export function formatUSD(usdAmount: number): string {
+export function formatUSD(usdAmount: number | null | undefined): string {
+  if (usdAmount == null) return 'Price N/A'
   return `$${usdAmount.toFixed(2)}`
 }
 
-export function formatINR(usdAmount: number, rate: number): string {
+export function formatINR(usdAmount: number | null | undefined, rate: number): string {
+  if (usdAmount == null) return 'Price N/A'
   return `₹${toINR(usdAmount, rate).toFixed(2)}`
 }
 
-export function formatPrice(usdAmount: number, currency: Currency, rate: number): string {
+export function formatPrice(
+  usdAmount: number | null | undefined,
+  currency: Currency,
+  rate: number
+): string {
   return currency === 'INR' ? formatINR(usdAmount, rate) : formatUSD(usdAmount)
 }
 
-// Both currencies together, e.g. for the WhatsApp message where showing
-// both avoids ambiguity about which currency was intended.
-export function formatBothCurrencies(usdAmount: number, rate: number): string {
+export function formatBothCurrencies(usdAmount: number | null | undefined, rate: number): string {
+  if (usdAmount == null) return 'Price N/A'
   return `${formatUSD(usdAmount)} / ${formatINR(usdAmount, rate)}`
 }
