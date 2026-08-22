@@ -22,7 +22,7 @@ type CartItemRow = {
   product: {
     sku: string
     name: string
-    price: number
+    price: number | null
   } | null
 }
 
@@ -36,7 +36,6 @@ type CartRow = {
 export default function ClientManagementPage() {
   const supabase = createClient()
   const { rate } = useCurrency()
-
   const [clients, setClients] = useState<ClientProfile[]>([])
   const [loadingClients, setLoadingClients] = useState(true)
   const [selectedId, setSelectedId] = useState<string | null>(null)
@@ -52,7 +51,6 @@ export default function ClientManagementPage() {
         .select('id, full_name, phone_number, company_name, created_at, is_admin')
         .eq('is_admin', false)
         .order('created_at', { ascending: false })
-
       if (error) {
         console.error('Failed to load clients:', error)
       } else {
@@ -69,7 +67,6 @@ export default function ClientManagementPage() {
       setCarts([])
       return
     }
-
     async function loadCarts() {
       setLoadingCarts(true)
       const { data, error } = await supabase
@@ -77,7 +74,6 @@ export default function ClientManagementPage() {
         .select('id, status, created_at, cart_items(id, quantity, product:products(sku, name, price))')
         .eq('user_id', selectedId)
         .order('created_at', { ascending: false })
-
       if (error) {
         console.error('Failed to load carts:', error)
         setCarts([])
@@ -117,7 +113,6 @@ export default function ClientManagementPage() {
         <p className="text-sm text-gray-500 mb-6">
           Registered client profiles, current carts, and order history.
         </p>
-
         <div className="flex flex-col lg:flex-row gap-6">
           {/* Client list */}
           <div className="lg:w-80 flex-shrink-0">
@@ -128,9 +123,7 @@ export default function ClientManagementPage() {
               placeholder="Search by name, phone, or company..."
               className="w-full text-sm border border-gray-300 rounded-md px-3 py-2 mb-3 focus:outline-none focus:ring-2 focus:ring-gray-400"
             />
-
             {loadingClients && <p className="text-sm text-gray-400">Loading clients...</p>}
-
             <div className="space-y-1 max-h-[70vh] overflow-y-auto">
               {filteredClients.map((client) => (
                 <button
@@ -161,7 +154,6 @@ export default function ClientManagementPage() {
             {!selectedClient && (
               <p className="text-sm text-gray-400">Select a client to view their details.</p>
             )}
-
             {selectedClient && (
               <div className="space-y-6">
                 {/* Profile */}
@@ -197,8 +189,8 @@ export default function ClientManagementPage() {
                           </span>
                           {item.product && (
                             <span className="text-gray-500">
-                              {formatUSD(item.product.price * item.quantity)} /{' '}
-                              {formatINR(item.product.price * item.quantity, rate)}
+                              {formatUSD((item.product.price ?? 0) * item.quantity)} /{' '}
+                              {formatINR((item.product.price ?? 0) * item.quantity, rate)}
                             </span>
                           )}
                         </div>
