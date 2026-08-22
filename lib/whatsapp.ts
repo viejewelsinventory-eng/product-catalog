@@ -34,7 +34,7 @@ export function buildWhatsAppCheckoutLink(
   // Items — SKU, qty, rate, amount, in both currencies
   lines.push('*Items*')
   items.forEach((item, index) => {
-    const lineTotal = item.product.price * item.quantity
+    const lineTotal = (item.product.price ?? 0) * item.quantity
     lines.push(`${index + 1}. SKU: ${item.product.sku}`)
     lines.push(`   Qty: ${item.quantity}`)
     lines.push(
