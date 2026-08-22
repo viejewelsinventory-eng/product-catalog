@@ -6,7 +6,7 @@ export type Product = {
   type: string | null
   subcategory: string | null
   brand: string | null
-  price: number
+  price: number | null
   sku: string
   drive_file_id: string | null
   tags: string[] | null
