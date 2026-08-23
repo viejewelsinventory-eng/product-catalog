@@ -11,6 +11,7 @@ export type SidebarFilters = {
   maxPrice: number | null
   category: string | null
   visibility: string | null
+  noImageOnly: boolean
 }
 
 type SidebarProps = {
@@ -22,12 +23,14 @@ type SidebarProps = {
   maxPrice: number | null
   selectedCategory: string | null
   selectedVisibility: string | null
+  noImageOnly: boolean
   onTypesChange: (values: string[]) => void
   onSubcategoriesChange: (values: string[]) => void
   onTagsChange: (values: string[]) => void
   onPriceChange: (min: number | null, max: number | null) => void
   onCategoryChange: (value: string | null) => void
   onVisibilityChange: (value: string | null) => void
+  onNoImageOnlyChange: (value: boolean) => void
 }
 
 type TypeGroupInfo = {
@@ -51,12 +54,14 @@ export default function Sidebar({
   maxPrice,
   selectedCategory,
   selectedVisibility,
+  noImageOnly,
   onTypesChange,
   onSubcategoriesChange,
   onTagsChange,
   onPriceChange,
   onCategoryChange,
   onVisibilityChange,
+  onNoImageOnlyChange,
 }: SidebarProps) {
   const supabase = createClient()
   const [typeGroups, setTypeGroups] = useState<Record<string, TypeGroupInfo>>({})
@@ -184,7 +189,7 @@ export default function Sidebar({
     selectedTags.length > 0 ||
     minPrice !== null ||
     maxPrice !== null ||
-    (isAdmin && (selectedCategory !== null || selectedVisibility !== null))
+    (isAdmin && (selectedCategory !== null || selectedVisibility !== null || noImageOnly))
 
   const clearAllFilters = () => {
     onTypesChange([])
@@ -194,6 +199,7 @@ export default function Sidebar({
     if (isAdmin) {
       onCategoryChange(null)
       onVisibilityChange(null)
+      onNoImageOnlyChange(false)
     }
   }
 
@@ -290,7 +296,7 @@ export default function Sidebar({
         </div>
       )}
 
-      {/* Admin-only filters: grand total, Category + Display/visibility */}
+      {/* Admin-only filters: grand total, Category + Display/visibility + No Image */}
       {isAdmin && (
         <div className="bg-amber-50 border border-amber-200 rounded-lg p-4 space-y-4">
           <div className="flex items-center justify-between">
@@ -337,6 +343,16 @@ export default function Sidebar({
               ))}
             </select>
           </div>
+
+          <label className="flex items-center gap-2 text-sm text-amber-900 cursor-pointer">
+            <input
+              type="checkbox"
+              checked={noImageOnly}
+              onChange={(e) => onNoImageOnlyChange(e.target.checked)}
+              className="accent-amber-700"
+            />
+            <span>No Image Only</span>
+          </label>
         </div>
       )}
     </aside>
