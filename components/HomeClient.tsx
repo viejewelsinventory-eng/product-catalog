@@ -15,6 +15,7 @@ export default function HomeClient({ profile }: { profile: Profile | null }) {
   // Admin-only filters
   const [category, setCategory] = useState<string | null>(null)
   const [visibility, setVisibility] = useState<string | null>(null)
+  const [noImageOnly, setNoImageOnly] = useState(false)
   // Search + sort
   const [search, setSearch] = useState('')
   const [sortBy, setSortBy] = useState<SortOption>('newest')
@@ -27,6 +28,7 @@ export default function HomeClient({ profile }: { profile: Profile | null }) {
     minPrice,
     maxPrice,
     visibility: isAdmin ? visibility : 'registered',
+    noImageOnly: isAdmin ? noImageOnly : false,
   }
   const handlePriceChange = (min: number | null, max: number | null) => {
     setMinPrice(min)
@@ -54,12 +56,14 @@ export default function HomeClient({ profile }: { profile: Profile | null }) {
             maxPrice={maxPrice}
             selectedCategory={category}
             selectedVisibility={visibility}
+            noImageOnly={noImageOnly}
             onTypesChange={setTypes}
             onSubcategoriesChange={setSubcategories}
             onTagsChange={setTags}
             onPriceChange={handlePriceChange}
             onCategoryChange={setCategory}
             onVisibilityChange={setVisibility}
+            onNoImageOnlyChange={setNoImageOnly}
           />
           <ProductGrid
             filters={filters}
