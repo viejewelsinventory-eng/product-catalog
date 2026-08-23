@@ -13,6 +13,7 @@ export type ActiveFilters = {
   minPrice: number | null
   maxPrice: number | null
   visibility: string | null
+  noImageOnly: boolean
 }
 export type SortOption = 'newest' | 'sku_asc' | 'price_asc' | 'price_desc'
 export default function ProductGrid({
@@ -77,6 +78,9 @@ export default function ProductGrid({
       }
       if (filters.visibility) {
         query = query.eq('visibility', filters.visibility)
+      }
+      if (filters.noImageOnly) {
+        query = query.or('drive_file_id.is.null,drive_file_id.eq.')
       }
       return query
     },
