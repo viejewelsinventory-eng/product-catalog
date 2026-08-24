@@ -4,6 +4,7 @@ import { createClient } from '@/lib/supabase/client'
 import type { Product } from '@/lib/types'
 import ProductCard from './ProductCard'
 import ProductDetailModal from './ProductDetailModal'
+import { fetchAllSkus, fetchFilteredSkus, downloadSkusAsExcel } from '@/lib/exportSkus'
 const PAGE_SIZE = 50
 export type ActiveFilters = {
   category: string | null
@@ -34,6 +35,8 @@ export default function ProductGrid({
   const [loadingMore, setLoadingMore] = useState(false)
   const [hasMore, setHasMore] = useState(true)
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null)
+  const [downloadingAll, setDownloadingAll] = useState(false)
+  const [downloadingFiltered, setDownloadingFiltered] = useState(false)
   const buildQuery = useCallback(
     (pageIndex: number) => {
       let query = supabase
@@ -120,6 +123,34 @@ export default function ProductGrid({
     }
     setLoadingMore(false)
   }
+  const handleDownloadAll = async () => {
+    setDownloadingAll(true)
+    try {
+      const skus = await fetchAllSkus(supabase)
+      downloadSkusAsExcel(skus, `all-skus-${new Date().toISOString().slice(0, 10)}.xlsx`)
+    } catch (err) {
+      console.error('Failed to download all SKUs:', err)
+    } finally {
+      setDownloadingAll(false)
+    }
+  }
+  const handleDownloadFiltered = async () => {
+    setDownloadingFiltered(true)
+    try {
+      const skus = await fetchFilteredSkus(supabase, {
+        category: filters.category,
+        visibility: filters.visibility,
+      })
+      downloadSkusAsExcel(
+        skus,
+        `filtered-skus-${new Date().toISOString().slice(0, 10)}.xlsx`
+      )
+    } catch (err) {
+      console.error('Failed to download filtered SKUs:', err)
+    } finally {
+      setDownloadingFiltered(false)
+    }
+  }
   if (loading) {
     return (
       <div className="flex-1 flex items-center justify-center py-20 text-gray-500">
@@ -127,36 +158,55 @@ export default function ProductGrid({
       </div>
     )
   }
-  if (products.length === 0) {
-    return (
-      <div className="flex-1 flex items-center justify-center py-20 text-gray-500">
-        No products match your filters.
-      </div>
-    )
-  }
   return (
     <div className="flex-1">
-      {/* Capped at 4 columns, no 5-column tier */}
-      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
-        {products.map((product) => (
-          <ProductCard
-            key={product.id}
-            product={product}
-            isAdmin={isAdmin}
-            onOpen={() => setSelectedProduct(product)}
-          />
-        ))}
-      </div>
-      {hasMore && (
-        <div className="flex justify-center mt-8">
+      {isAdmin && (
+        <div className="flex flex-wrap gap-3 mb-4">
           <button
-            onClick={loadMore}
-            disabled={loadingMore}
-            className="bg-white border border-gray-300 text-gray-900 rounded-md px-6 py-2 text-sm font-medium hover:bg-gray-50 disabled:opacity-50"
+            onClick={handleDownloadAll}
+            disabled={downloadingAll}
+            className="bg-white border border-gray-300 text-gray-900 rounded-md px-4 py-2 text-sm font-medium hover:bg-gray-50 disabled:opacity-50"
           >
-            {loadingMore ? 'Loading...' : 'Load More'}
+            {downloadingAll ? 'Preparing file...' : 'Download All SKUs (Excel)'}
+          </button>
+          <button
+            onClick={handleDownloadFiltered}
+            disabled={downloadingFiltered}
+            className="bg-white border border-gray-300 text-gray-900 rounded-md px-4 py-2 text-sm font-medium hover:bg-gray-50 disabled:opacity-50"
+          >
+            {downloadingFiltered ? 'Preparing file...' : 'Download Filtered SKUs (Excel)'}
           </button>
         </div>
+      )}
+      {products.length === 0 ? (
+        <div className="flex-1 flex items-center justify-center py-20 text-gray-500">
+          No products match your filters.
+        </div>
+      ) : (
+        <>
+          {/* Capped at 4 columns, no 5-column tier */}
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
+            {products.map((product) => (
+              <ProductCard
+                key={product.id}
+                product={product}
+                isAdmin={isAdmin}
+                onOpen={() => setSelectedProduct(product)}
+              />
+            ))}
+          </div>
+          {hasMore && (
+            <div className="flex justify-center mt-8">
+              <button
+                onClick={loadMore}
+                disabled={loadingMore}
+                className="bg-white border border-gray-300 text-gray-900 rounded-md px-6 py-2 text-sm font-medium hover:bg-gray-50 disabled:opacity-50"
+              >
+                {loadingMore ? 'Loading...' : 'Load More'}
+              </button>
+            </div>
+          )}
+        </>
       )}
       {selectedProduct && (
         <ProductDetailModal
