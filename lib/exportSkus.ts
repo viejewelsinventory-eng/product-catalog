@@ -1,38 +1,22 @@
 import type { SupabaseClient } from '@supabase/supabase-js'
 import * as XLSX from 'xlsx'
 
-const PAGE_SIZE = 1000
-
 /**
  * Fetch every SKU in the products table, no filters applied.
- * Paginates in batches of 1000 to work around PostgREST's row cap.
+ * Uses a single server-side RPC call (see create_sku_export_functions.sql)
+ * instead of paginating client-side, which is far faster for ~176k rows.
  */
 export async function fetchAllSkus(
   supabase: SupabaseClient
 ): Promise<string[]> {
-  const skus: string[] = []
-  let start = 0
+  const { data, error } = await supabase.rpc('get_all_skus')
 
-  while (true) {
-    const { data, error } = await supabase
-      .from('products')
-      .select('sku')
-      .order('sku', { ascending: true })
-      .range(start, start + PAGE_SIZE - 1)
-
-    if (error) {
-      console.error('Failed to fetch all SKUs:', error)
-      break
-    }
-    if (!data || data.length === 0) break
-
-    skus.push(...data.map((row) => row.sku as string).filter(Boolean))
-
-    if (data.length < PAGE_SIZE) break
-    start += PAGE_SIZE
+  if (error) {
+    console.error('Failed to fetch all SKUs:', error)
+    return []
   }
 
-  return skus
+  return (data as string[]) ?? []
 }
 
 /**
@@ -44,38 +28,17 @@ export async function fetchFilteredSkus(
   supabase: SupabaseClient,
   filters: { category: string | null; visibility: string | null }
 ): Promise<string[]> {
-  const skus: string[] = []
-  let start = 0
+  const { data, error } = await supabase.rpc('get_filtered_skus', {
+    p_category: filters.category,
+    p_visibility: filters.visibility,
+  })
 
-  while (true) {
-    let query = supabase
-      .from('products')
-      .select('sku')
-      .order('sku', { ascending: true })
-      .range(start, start + PAGE_SIZE - 1)
-
-    if (filters.category) {
-      query = query.eq('category', filters.category)
-    }
-    if (filters.visibility) {
-      query = query.eq('visibility', filters.visibility)
-    }
-
-    const { data, error } = await query
-
-    if (error) {
-      console.error('Failed to fetch filtered SKUs:', error)
-      break
-    }
-    if (!data || data.length === 0) break
-
-    skus.push(...data.map((row) => row.sku as string).filter(Boolean))
-
-    if (data.length < PAGE_SIZE) break
-    start += PAGE_SIZE
+  if (error) {
+    console.error('Failed to fetch filtered SKUs:', error)
+    return []
   }
 
-  return skus
+  return (data as string[]) ?? []
 }
 
 /**
