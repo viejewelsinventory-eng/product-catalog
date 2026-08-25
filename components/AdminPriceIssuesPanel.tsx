@@ -1,19 +1,16 @@
 'use client'
 import { useCallback, useEffect, useState } from 'react'
 import { createClient } from '@/lib/supabase/client'
-
 type FlaggedProduct = {
   id: string
   sku: string
   price: number | null
 }
-
 export default function AdminPriceIssuesPanel() {
   const supabase = createClient()
   const [issues, setIssues] = useState<FlaggedProduct[]>([])
   const [loading, setLoading] = useState(true)
   const [lastChecked, setLastChecked] = useState<Date | null>(null)
-
   const loadIssues = useCallback(async () => {
     setLoading(true)
     const { data, error } = await supabase
@@ -22,7 +19,6 @@ export default function AdminPriceIssuesPanel() {
       .eq('visibility', 'registered')
       .or('price.is.null,price.lte.0')
       .order('sku', { ascending: true })
-
     if (error) {
       console.error('Failed to load price issues:', error)
       setIssues([])
@@ -32,12 +28,10 @@ export default function AdminPriceIssuesPanel() {
     setLastChecked(new Date())
     setLoading(false)
   }, [supabase])
-
   useEffect(() => {
     loadIssues()
   }, [loadIssues])
-
-  if (loading && issues.length === 0) {
+  if (loading && issues.length === 0 && !lastChecked) {
     return (
       <div className="max-w-7xl mx-auto px-4 pt-4">
         <div className="bg-white border border-gray-200 rounded-lg p-4 text-sm text-gray-400">
@@ -46,11 +40,26 @@ export default function AdminPriceIssuesPanel() {
       </div>
     )
   }
-
+  // No issues: collapse to a single black-and-white line, refresh button stays in place
   if (issues.length === 0) {
-    return null // nothing wrong, don't clutter the admin view
+    return (
+      <div className="max-w-7xl mx-auto px-4 pt-4">
+        <div className="bg-white border border-gray-200 rounded-lg px-4 py-2 flex items-center justify-between">
+          <h2 className="text-sm font-semibold text-gray-800">
+            ⚠ Price Issues — Registered User visibility (0) Result - nil
+          </h2>
+          <button
+            onClick={loadIssues}
+            disabled={loading}
+            className="text-xs bg-white border border-gray-300 text-gray-700 rounded-md px-3 py-1 hover:bg-gray-100 disabled:opacity-50"
+          >
+            {loading ? 'Refreshing...' : 'Refresh'}
+          </button>
+        </div>
+      </div>
+    )
   }
-
+  // Issues found: full red panel with details, unchanged from before
   return (
     <div className="max-w-7xl mx-auto px-4 pt-4">
       <div className="bg-red-50 border border-red-200 rounded-lg p-4">
