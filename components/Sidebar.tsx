@@ -351,7 +351,7 @@ export default function Sidebar({
               onChange={(e) => onNoImageOnlyChange(e.target.checked)}
               className="accent-amber-700"
             />
-            <span>No Image Only</span>
+            <span>No Images</span>
           </label>
         </div>
       )}
