@@ -12,6 +12,10 @@ const VISIBILITY_LABELS: Record<string, string> = {
   public: 'Main Website',
   blank: 'Blank',
 }
+
+const MAX_IMAGE_RETRIES = 2
+const RETRY_DELAY_MS = 1200
+
 export default function ProductCard({
   product,
   isAdmin,
@@ -25,15 +29,34 @@ export default function ProductCard({
   const { currency, rate } = useCurrency()
   const [adding, setAdding] = useState(false)
   const [imgError, setImgError] = useState(false)
+  const [retryCount, setRetryCount] = useState(0)
   const handleAdd = async (e: React.MouseEvent) => {
     e.stopPropagation()
     setAdding(true)
     await addToCart(product, 1)
     setAdding(false)
   }
+  const handleImageError = () => {
+    if (isBlank) return
+    if (retryCount < MAX_IMAGE_RETRIES) {
+      // Transient failures are common right after a bulk image-matching
+      // run: Google Drive often needs to generate a thumbnail the first
+      // time a file is requested. Retry a couple of times with a short
+      // delay before falling back to the missing-photo placeholder.
+      setTimeout(() => {
+        setRetryCount((count) => count + 1)
+      }, RETRY_DELAY_MS)
+    } else {
+      setImgError(true)
+    }
+  }
   const isBlank = product.visibility === 'blank'
   const imageUrl = getProductImageUrl(product.drive_file_id)
-  const displaySrc = isBlank ? '/blank.jpg' : imgError ? '/photo-missing.jpg' : imageUrl
+  const displaySrc = isBlank
+    ? '/blank.jpg'
+    : imgError
+    ? '/photo-missing.jpg'
+    : imageUrl
   const displayLabel = VISIBILITY_LABELS[product.visibility] ?? product.visibility
   return (
     <div
@@ -43,14 +66,16 @@ export default function ProductCard({
       {/* Full image, no cropping. Blank overrides everything; otherwise fall back to photo-missing on load error */}
       <div className="relative w-full aspect-square bg-gray-100">
         <Image
+          // key forces a fresh <img> mount on retry, since simply changing
+          // the src prop on the same element won't reliably re-trigger a
+          // request after a prior failure.
+          key={`${product.id}-${retryCount}`}
           src={displaySrc}
           alt={product.sku}
           fill
           sizes="(max-width: 768px) 50vw, (max-width: 1200px) 33vw, 25vw"
           className="object-contain"
-          onError={() => {
-            if (!isBlank) setImgError(true)
-          }}
+          onError={handleImageError}
           unoptimized
         />
       </div>
