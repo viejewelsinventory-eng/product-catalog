@@ -138,8 +138,15 @@ export default function ProductGrid({
     setDownloadingFiltered(true)
     try {
       const skus = await fetchFilteredSkus(supabase, {
+        search,
         category: filters.category,
+        types: filters.types,
+        subcategories: filters.subcategories,
+        tags: filters.tags,
+        minPrice: filters.minPrice,
+        maxPrice: filters.maxPrice,
         visibility: filters.visibility,
+        noImageOnly: filters.noImageOnly,
       })
       downloadSkusAsExcel(
         skus,
