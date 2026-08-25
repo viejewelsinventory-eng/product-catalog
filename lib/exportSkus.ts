@@ -19,9 +19,13 @@ export async function fetchAllSkus(
 
 /**
  * Fetch SKUs matching every currently active filter (search, category,
- * types, subcategories, tags, price range, visibility, noImageOnly) —
+ * types, subcategories, tags, price range, visibility, noImageOnly) --
  * mirrors ProductGrid.tsx's buildQuery() exactly, so the export always
  * matches what's showing on screen.
+ *
+ * The underlying RPC returns a single text[] column (one row containing
+ * the whole array) rather than one row per SKU, so results aren't
+ * silently truncated by Supabase's default max-rows limit.
  */
 export async function fetchFilteredSkus(
   supabase: SupabaseClient,
@@ -52,7 +56,7 @@ export async function fetchFilteredSkus(
     console.error('Failed to fetch filtered SKUs:', error)
     return []
   }
-  return (data as { sku: string }[])?.map((row) => row.sku) ?? []
+  return (data as string[]) ?? []
 }
 
 /**
