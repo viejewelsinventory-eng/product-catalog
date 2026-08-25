@@ -68,6 +68,7 @@ export default function Sidebar({
   const [expandedTypes, setExpandedTypes] = useState<Set<string>>(new Set())
   const [allTags, setAllTags] = useState<string[]>([])
   const [adminCategories, setAdminCategories] = useState<string[]>([])
+  const [totalCount, setTotalCount] = useState<number>(0)
 
   // File Types list (fixed set of available tag options) -- loaded once
   useEffect(() => {
@@ -80,10 +81,11 @@ export default function Sidebar({
     loadTags()
   }, [supabase])
 
-  // Type / Sub-type counts -- reloads any time File Types, price, or the
-  // admin Category/Display filters change, so counts always reflect what's
-  // currently filtered. Non-admin viewers are implicitly scoped to
-  // visibility = 'registered', matching what ProductGrid actually queries.
+  // Type / Sub-type counts -- reloads any time ANY filter changes (types,
+  // subcategories, File Types/tags, price, or the admin Category/Display
+  // filters), so counts always reflect exactly what's currently filtered.
+  // Non-admin viewers are implicitly scoped to visibility = 'registered',
+  // matching what ProductGrid actually queries.
   useEffect(() => {
     const loadTypeGroups = async () => {
       const effectiveVisibility = isAdmin ? selectedVisibility : 'registered'
@@ -93,6 +95,10 @@ export default function Sidebar({
         max_price: maxPrice,
         category_filter: isAdmin ? selectedCategory : null,
         visibility_filter: effectiveVisibility,
+        types_filter: selectedTypes.length > 0 ? selectedTypes : null,
+        subcategories_filter: selectedSubcategories.length > 0 ? selectedSubcategories : null,
+        no_image_only: isAdmin ? noImageOnly : false,
+        search_filter: null,
       })
 
       if (typeSubData) {
@@ -124,7 +130,53 @@ export default function Sidebar({
     }
 
     loadTypeGroups()
-  }, [supabase, isAdmin, selectedTags, minPrice, maxPrice, selectedCategory, selectedVisibility])
+  }, [
+    supabase,
+    isAdmin,
+    selectedTypes,
+    selectedSubcategories,
+    selectedTags,
+    minPrice,
+    maxPrice,
+    selectedCategory,
+    selectedVisibility,
+    noImageOnly,
+  ])
+
+  // Grand total -- admin only. Uses a dedicated count RPC (rather than
+  // summing the type breakdown above) so it stays accurate even for
+  // products with no Type set, and reacts to every active filter.
+  useEffect(() => {
+    if (!isAdmin) return
+    const loadTotalCount = async () => {
+      const { data, error } = await supabase.rpc('get_filtered_product_count', {
+        p_search: null,
+        p_category: selectedCategory,
+        p_types: selectedTypes.length > 0 ? selectedTypes : null,
+        p_subcategories: selectedSubcategories.length > 0 ? selectedSubcategories : null,
+        p_tags: selectedTags.length > 0 ? selectedTags : null,
+        p_min_price: minPrice,
+        p_max_price: maxPrice,
+        p_visibility: selectedVisibility,
+        p_no_image_only: noImageOnly,
+      })
+      if (!error && typeof data === 'number') {
+        setTotalCount(data)
+      }
+    }
+    loadTotalCount()
+  }, [
+    supabase,
+    isAdmin,
+    selectedTypes,
+    selectedSubcategories,
+    selectedTags,
+    minPrice,
+    maxPrice,
+    selectedCategory,
+    selectedVisibility,
+    noImageOnly,
+  ])
 
   // Admin-only: load category options, filtered by the selected Display
   // value so only categories that actually exist for that tier show up.
@@ -179,9 +231,6 @@ export default function Sidebar({
       onTagsChange([...selectedTags, value])
     }
   }
-
-  // Grand total across all types under current filters -- admin-only
-  const grandTotal = Object.values(typeGroups).reduce((sum, info) => sum + info.total, 0)
 
   const hasActiveFilters =
     selectedTypes.length > 0 ||
@@ -296,7 +345,7 @@ export default function Sidebar({
         </div>
       )}
 
-      {/* Admin-only filters: grand total, Category + Display/visibility + No Image */}
+      {/* Admin-only filters: grand total, Category + Display/visibility + No images */}
       {isAdmin && (
         <div className="bg-amber-50 border border-amber-200 rounded-lg p-4 space-y-4">
           <div className="flex items-center justify-between">
@@ -304,7 +353,7 @@ export default function Sidebar({
               Admin Filters
             </h3>
             <span className="text-xs font-medium text-amber-800">
-              Total: {grandTotal}
+              Total: {totalCount}
             </span>
           </div>
 
@@ -351,7 +400,7 @@ export default function Sidebar({
               onChange={(e) => onNoImageOnlyChange(e.target.checked)}
               className="accent-amber-700"
             />
-            <span>No Images</span>
+            <span>No images</span>
           </label>
         </div>
       )}
