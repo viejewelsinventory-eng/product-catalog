@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import { createClient } from '@/lib/supabase/client'
+import { getFileTypeLabel } from '@/lib/fileTypes'
 
 export type SidebarFilters = {
   types: string[]
@@ -70,7 +71,6 @@ export default function Sidebar({
   const [adminCategories, setAdminCategories] = useState<string[]>([])
   const [totalCount, setTotalCount] = useState<number>(0)
 
-  // File Types list (fixed set of available tag options) -- loaded once
   useEffect(() => {
     const loadTags = async () => {
       const { data: tagData } = await supabase.rpc('get_distinct_tags')
@@ -81,11 +81,6 @@ export default function Sidebar({
     loadTags()
   }, [supabase])
 
-  // Type / Sub-type counts -- reloads any time ANY filter changes (types,
-  // subcategories, File Types/tags, price, or the admin Category/Display
-  // filters), so counts always reflect exactly what's currently filtered.
-  // Non-admin viewers are implicitly scoped to visibility = 'registered',
-  // matching what ProductGrid actually queries.
   useEffect(() => {
     const loadTypeGroups = async () => {
       const effectiveVisibility = isAdmin ? selectedVisibility : 'registered'
@@ -143,9 +138,6 @@ export default function Sidebar({
     noImageOnly,
   ])
 
-  // Grand total -- admin only. Uses a dedicated count RPC (rather than
-  // summing the type breakdown above) so it stays accurate even for
-  // products with no Type set, and reacts to every active filter.
   useEffect(() => {
     if (!isAdmin) return
     const loadTotalCount = async () => {
@@ -178,8 +170,6 @@ export default function Sidebar({
     noImageOnly,
   ])
 
-  // Admin-only: load category options, filtered by the selected Display
-  // value so only categories that actually exist for that tier show up.
   useEffect(() => {
     if (!isAdmin) return
     const loadCategories = async () => {
@@ -189,8 +179,6 @@ export default function Sidebar({
       if (data) {
         const cats = (data as { category: string }[]).map((row) => row.category)
         setAdminCategories(cats)
-        // If the currently selected category no longer applies under the
-        // new Display filter, clear it rather than leaving a stale/invalid combo.
         if (selectedCategory && !cats.includes(selectedCategory)) {
           onCategoryChange(null)
         }
@@ -264,7 +252,6 @@ export default function Sidebar({
         </button>
       )}
 
-      {/* Type -> Sub-type (nested), with live product counts */}
       {Object.keys(typeGroups).length > 0 && (
         <div className="bg-white border border-gray-200 rounded-lg p-4">
           <h3 className="text-sm font-semibold text-gray-900 mb-3">Type</h3>
@@ -320,7 +307,6 @@ export default function Sidebar({
         </div>
       )}
 
-      {/* File Types (formerly "Tags") */}
       {allTags.length > 0 && (
         <div className="bg-white border border-gray-200 rounded-lg p-4">
           <h3 className="text-sm font-semibold text-gray-900 mb-3">File Types</h3>
@@ -337,7 +323,7 @@ export default function Sidebar({
                       : 'bg-white text-gray-700 border-gray-300 hover:border-gray-500'
                   }`}
                 >
-                  {tag}
+                  {getFileTypeLabel(tag)}
                 </button>
               )
             })}
@@ -345,7 +331,6 @@ export default function Sidebar({
         </div>
       )}
 
-      {/* Admin-only filters: grand total, Category + Display/visibility + No images */}
       {isAdmin && (
         <div className="bg-amber-50 border border-amber-200 rounded-lg p-4 space-y-4">
           <div className="flex items-center justify-between">
