@@ -68,7 +68,9 @@ export default function ProductGrid({
         query = query.in('type', filters.types)
       }
       if (filters.subcategories.length > 0) {
-        query = query.in('subcategory', filters.subcategories)
+        // subcategory is now text[] (a product can belong to multiple
+        // sub-types), so match if it shares ANY selected sub-type.
+        query = query.overlaps('subcategory', filters.subcategories)
       }
       if (filters.tags.length > 0) {
         query = query.overlaps('tags', filters.tags)
@@ -84,6 +86,13 @@ export default function ProductGrid({
       }
       if (filters.noImageOnly) {
         query = query.or('drive_file_id.is.null,drive_file_id.eq.')
+      }
+      if (!isAdmin) {
+        // Registered/public users should never see "Photo Missing" items --
+        // only admins see those, so they know what still needs a photo.
+        // Once an image is matched (drive_file_id populated), the product
+        // becomes visible here automatically.
+        query = query.not('drive_file_id', 'is', null).neq('drive_file_id', '')
       }
       return query
     },
