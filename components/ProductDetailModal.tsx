@@ -4,7 +4,7 @@ import { useState } from 'react'
 import type { Product } from '@/lib/types'
 import { getProductImageUrl } from '@/lib/types'
 import { formatUSD } from '@/lib/currency'
-const ALL_FILE_TYPES = ['3DM', '3DM (Mesh with diamonds)', 'JCD', 'MGX', 'STL']
+import { FILE_TYPE_LABELS } from '@/lib/fileTypes'
 export default function ProductDetailModal({
   product,
   onClose,
@@ -58,17 +58,17 @@ export default function ProductDetailModal({
               File types available
             </h3>
             <ul className="space-y-1">
-              {ALL_FILE_TYPES.map((fileType) => {
-                const available = availableTags.has(fileType)
+              {FILE_TYPE_LABELS.map(({ tag, label }) => {
+                const available = availableTags.has(tag)
                 return (
                   <li
-                    key={fileType}
+                    key={tag}
                     className={`text-sm flex items-center gap-2 ${
                       available ? 'text-gray-900' : 'text-gray-300'
                     }`}
                   >
                     <span>{available ? '✓' : '✕'}</span>
-                    {fileType}
+                    {label}
                   </li>
                 )
               })}
