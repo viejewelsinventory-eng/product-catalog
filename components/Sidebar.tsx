@@ -94,6 +94,7 @@ export default function Sidebar({
         subcategories_filter: selectedSubcategories.length > 0 ? selectedSubcategories : null,
         no_image_only: isAdmin ? noImageOnly : false,
         search_filter: null,
+        require_image: !isAdmin,
       })
 
       if (typeSubData) {
