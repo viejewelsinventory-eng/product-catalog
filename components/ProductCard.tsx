@@ -58,6 +58,12 @@ export default function ProductCard({
     ? '/photo-missing.jpg'
     : imageUrl
   const displayLabel = VISIBILITY_LABELS[product.visibility] ?? product.visibility
+  // subsubcategory stores composite "SubType::SubSubType" values; only the
+  // Sub-Sub-Type portion is shown here since the Sub-Type is already
+  // rendered on its own line above.
+  const subSubLabels = (product.subsubcategory ?? []).map((value) =>
+    value.includes('::') ? value.split('::')[1] : value
+  )
   return (
     <div
       onClick={onOpen}
@@ -82,6 +88,27 @@ export default function ProductCard({
       <div className="p-3 flex flex-col flex-1 gap-1.5">
         {/* SKU under image, shown to everyone */}
         <p className="text-sm font-semibold text-gray-900">{product.sku}</p>
+        {/* Sub-Type / Sub-Sub-Type tags, shown to everyone */}
+        {(product.subcategory?.length || subSubLabels.length) ? (
+          <div className="flex flex-wrap gap-1">
+            {product.subcategory?.map((sub) => (
+              <span
+                key={`sub-${sub}`}
+                className="text-[10px] px-1.5 py-0.5 rounded bg-blue-50 text-blue-700 border border-blue-100"
+              >
+                {sub}
+              </span>
+            ))}
+            {subSubLabels.map((label, i) => (
+              <span
+                key={`subsub-${label}-${i}`}
+                className="text-[10px] px-1.5 py-0.5 rounded bg-purple-50 text-purple-700 border border-purple-100"
+              >
+                {label}
+              </span>
+            ))}
+          </div>
+        ) : null}
         {/* Admin only: file types (tags) available -- reserves space even when empty, per spec */}
         {isAdmin && (
           <div className="flex flex-wrap gap-1 min-h-[1.25rem]">
