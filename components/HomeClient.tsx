@@ -9,6 +9,7 @@ import type { Profile } from '@/lib/types'
 export default function HomeClient({ profile }: { profile: Profile | null }) {
   const [types, setTypes] = useState<string[]>([])
   const [subcategories, setSubcategories] = useState<string[]>([])
+  const [subsubcategories, setSubsubcategories] = useState<string[]>([])
   const [tags, setTags] = useState<string[]>([])
   const [minPrice, setMinPrice] = useState<number | null>(null)
   const [maxPrice, setMaxPrice] = useState<number | null>(null)
@@ -24,6 +25,7 @@ export default function HomeClient({ profile }: { profile: Profile | null }) {
     category: isAdmin ? category : null,
     types,
     subcategories,
+    subsubcategories,
     tags,
     minPrice,
     maxPrice,
@@ -51,6 +53,7 @@ export default function HomeClient({ profile }: { profile: Profile | null }) {
             isAdmin={isAdmin}
             selectedTypes={types}
             selectedSubcategories={subcategories}
+            selectedSubsubcategories={subsubcategories}
             selectedTags={tags}
             minPrice={minPrice}
             maxPrice={maxPrice}
@@ -59,6 +62,7 @@ export default function HomeClient({ profile }: { profile: Profile | null }) {
             noImageOnly={noImageOnly}
             onTypesChange={setTypes}
             onSubcategoriesChange={setSubcategories}
+            onSubsubcategoriesChange={setSubsubcategories}
             onTagsChange={setTags}
             onPriceChange={handlePriceChange}
             onCategoryChange={setCategory}
