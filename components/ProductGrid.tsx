@@ -10,6 +10,7 @@ export type ActiveFilters = {
   category: string | null
   types: string[]
   subcategories: string[]
+  subsubcategories: string[]
   tags: string[]
   minPrice: number | null
   maxPrice: number | null
@@ -68,9 +69,16 @@ export default function ProductGrid({
         query = query.in('type', filters.types)
       }
       if (filters.subcategories.length > 0) {
-        // subcategory is now text[] (a product can belong to multiple
+        // subcategory is text[] (a product can belong to multiple
         // sub-types), so match if it shares ANY selected sub-type.
         query = query.overlaps('subcategory', filters.subcategories)
+      }
+      if (filters.subsubcategories.length > 0) {
+        // subsubcategory stores composite "SubType::SubSubType" values,
+        // so matching stays scoped to the exact parent Sub-Type -- the
+        // same Sub-Sub-Type name reused under a different Sub-Type never
+        // cross-matches here.
+        query = query.overlaps('subsubcategory', filters.subsubcategories)
       }
       if (filters.tags.length > 0) {
         query = query.overlaps('tags', filters.tags)
@@ -96,7 +104,7 @@ export default function ProductGrid({
       }
       return query
     },
-    [filters, search, sortBy, supabase]
+    [filters, search, sortBy, supabase, isAdmin]
   )
   // Reset and refetch whenever filters, search, or sort change
   useEffect(() => {
@@ -151,6 +159,7 @@ export default function ProductGrid({
         category: filters.category,
         types: filters.types,
         subcategories: filters.subcategories,
+        subsubcategories: filters.subsubcategories,
         tags: filters.tags,
         minPrice: filters.minPrice,
         maxPrice: filters.maxPrice,
