@@ -4,7 +4,8 @@ export type Product = {
   description: string | null
   category: string | null
   type: string | null
-  subcategory: string | null
+  subcategory: string[] | null
+  subsubcategory: string[] | null
   brand: string | null
   price: number | null
   sku: string
