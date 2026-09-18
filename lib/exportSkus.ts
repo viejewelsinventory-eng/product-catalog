@@ -19,9 +19,9 @@ export async function fetchAllSkus(
 
 /**
  * Fetch SKUs matching every currently active filter (search, category,
- * types, subcategories, tags, price range, visibility, noImageOnly) --
- * mirrors ProductGrid.tsx's buildQuery() exactly, so the export always
- * matches what's showing on screen.
+ * types, subcategories, subsubcategories, tags, price range, visibility,
+ * noImageOnly) -- mirrors ProductGrid.tsx's buildQuery() exactly, so the
+ * export always matches what's showing on screen.
  *
  * The underlying RPC returns a single text[] column (one row containing
  * the whole array) rather than one row per SKU, so results aren't
@@ -34,6 +34,7 @@ export async function fetchFilteredSkus(
     category: string | null
     types: string[]
     subcategories: string[]
+    subsubcategories: string[]
     tags: string[]
     minPrice: number | null
     maxPrice: number | null
@@ -46,6 +47,7 @@ export async function fetchFilteredSkus(
     p_category: filters.category,
     p_types: filters.types.length > 0 ? filters.types : null,
     p_subcategories: filters.subcategories.length > 0 ? filters.subcategories : null,
+    p_subsubcategories: filters.subsubcategories.length > 0 ? filters.subsubcategories : null,
     p_tags: filters.tags.length > 0 ? filters.tags : null,
     p_min_price: filters.minPrice,
     p_max_price: filters.maxPrice,
