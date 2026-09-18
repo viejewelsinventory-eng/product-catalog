@@ -7,6 +7,7 @@ import { getFileTypeLabel } from '@/lib/fileTypes'
 export type SidebarFilters = {
   types: string[]
   subcategories: string[]
+  subsubcategories: string[]
   tags: string[]
   minPrice: number | null
   maxPrice: number | null
@@ -19,6 +20,7 @@ type SidebarProps = {
   isAdmin: boolean
   selectedTypes: string[]
   selectedSubcategories: string[]
+  selectedSubsubcategories: string[]
   selectedTags: string[]
   minPrice: number | null
   maxPrice: number | null
@@ -27,6 +29,7 @@ type SidebarProps = {
   noImageOnly: boolean
   onTypesChange: (values: string[]) => void
   onSubcategoriesChange: (values: string[]) => void
+  onSubsubcategoriesChange: (values: string[]) => void
   onTagsChange: (values: string[]) => void
   onPriceChange: (min: number | null, max: number | null) => void
   onCategoryChange: (value: string | null) => void
@@ -34,10 +37,9 @@ type SidebarProps = {
   onNoImageOnlyChange: (value: boolean) => void
 }
 
-type TypeGroupInfo = {
-  total: number
-  subs: { name: string; count: number }[]
-}
+type SubSubInfo = { name: string; count: number }
+type SubcategoryInfo = { name: string; count: number; subsubs: SubSubInfo[] }
+type TypeGroupInfo = { total: number; subs: SubcategoryInfo[] }
 
 const VISIBILITY_OPTIONS: { value: string; label: string }[] = [
   { value: 'admin', label: 'Admin Only' },
@@ -50,6 +52,7 @@ export default function Sidebar({
   isAdmin,
   selectedTypes,
   selectedSubcategories,
+  selectedSubsubcategories,
   selectedTags,
   minPrice,
   maxPrice,
@@ -58,6 +61,7 @@ export default function Sidebar({
   noImageOnly,
   onTypesChange,
   onSubcategoriesChange,
+  onSubsubcategoriesChange,
   onTagsChange,
   onPriceChange,
   onCategoryChange,
@@ -67,6 +71,7 @@ export default function Sidebar({
   const supabase = createClient()
   const [typeGroups, setTypeGroups] = useState<Record<string, TypeGroupInfo>>({})
   const [expandedTypes, setExpandedTypes] = useState<Set<string>>(new Set())
+  const [expandedSubcategories, setExpandedSubcategories] = useState<Set<string>>(new Set())
   const [allTags, setAllTags] = useState<string[]>([])
   const [adminCategories, setAdminCategories] = useState<string[]>([])
   const [totalCount, setTotalCount] = useState<number>(0)
@@ -95,29 +100,47 @@ export default function Sidebar({
         no_image_only: isAdmin ? noImageOnly : false,
         search_filter: null,
         require_image: !isAdmin,
+        subsubcategories_filter: selectedSubsubcategories.length > 0 ? selectedSubsubcategories : null,
       })
 
       if (typeSubData) {
-        const groups: Record<string, { total: number; subs: Record<string, number> }> = {}
+        const groups: Record<
+          string,
+          { total: number; subs: Record<string, { total: number; subsubs: Record<string, number> }> }
+        > = {}
         for (const row of typeSubData as {
           type: string
           subcategory: string | null
+          subsubcategory: string | null
           product_count: number
         }[]) {
           if (!row.type) continue
           if (!groups[row.type]) groups[row.type] = { total: 0, subs: {} }
           groups[row.type].total += Number(row.product_count)
           if (row.subcategory) {
-            groups[row.type].subs[row.subcategory] =
-              (groups[row.type].subs[row.subcategory] || 0) + Number(row.product_count)
+            if (!groups[row.type].subs[row.subcategory]) {
+              groups[row.type].subs[row.subcategory] = { total: 0, subsubs: {} }
+            }
+            groups[row.type].subs[row.subcategory].total += Number(row.product_count)
+            if (row.subsubcategory) {
+              groups[row.type].subs[row.subcategory].subsubs[row.subsubcategory] =
+                (groups[row.type].subs[row.subcategory].subsubs[row.subsubcategory] || 0) +
+                Number(row.product_count)
+            }
           }
         }
         const sortedGroups: Record<string, TypeGroupInfo> = {}
         Object.keys(groups)
           .sort()
           .forEach((type) => {
-            const subsArr = Object.entries(groups[type].subs)
-              .map(([name, count]) => ({ name, count }))
+            const subsArr: SubcategoryInfo[] = Object.entries(groups[type].subs)
+              .map(([name, info]) => ({
+                name,
+                count: info.total,
+                subsubs: Object.entries(info.subsubs)
+                  .map(([subName, count]) => ({ name: subName, count }))
+                  .sort((a, b) => a.name.localeCompare(b.name)),
+              }))
               .sort((a, b) => a.name.localeCompare(b.name))
             sortedGroups[type] = { total: groups[type].total, subs: subsArr }
           })
@@ -131,6 +154,7 @@ export default function Sidebar({
     isAdmin,
     selectedTypes,
     selectedSubcategories,
+    selectedSubsubcategories,
     selectedTags,
     minPrice,
     maxPrice,
@@ -152,6 +176,7 @@ export default function Sidebar({
         p_max_price: maxPrice,
         p_visibility: selectedVisibility,
         p_no_image_only: noImageOnly,
+        p_subsubcategories: selectedSubsubcategories.length > 0 ? selectedSubsubcategories : null,
       })
       if (!error && typeof data === 'number') {
         setTotalCount(data)
@@ -163,6 +188,7 @@ export default function Sidebar({
     isAdmin,
     selectedTypes,
     selectedSubcategories,
+    selectedSubsubcategories,
     selectedTags,
     minPrice,
     maxPrice,
@@ -197,6 +223,15 @@ export default function Sidebar({
     })
   }
 
+  const toggleSubExpanded = (key: string) => {
+    setExpandedSubcategories((prev) => {
+      const next = new Set(prev)
+      if (next.has(key)) next.delete(key)
+      else next.add(key)
+      return next
+    })
+  }
+
   const toggleType = (type: string) => {
     if (selectedTypes.includes(type)) {
       onTypesChange(selectedTypes.filter((v) => v !== type))
@@ -213,6 +248,14 @@ export default function Sidebar({
     }
   }
 
+  const toggleSubsubcategory = (composite: string) => {
+    if (selectedSubsubcategories.includes(composite)) {
+      onSubsubcategoriesChange(selectedSubsubcategories.filter((v) => v !== composite))
+    } else {
+      onSubsubcategoriesChange([...selectedSubsubcategories, composite])
+    }
+  }
+
   const toggleTag = (value: string) => {
     if (selectedTags.includes(value)) {
       onTagsChange(selectedTags.filter((v) => v !== value))
@@ -224,6 +267,7 @@ export default function Sidebar({
   const hasActiveFilters =
     selectedTypes.length > 0 ||
     selectedSubcategories.length > 0 ||
+    selectedSubsubcategories.length > 0 ||
     selectedTags.length > 0 ||
     minPrice !== null ||
     maxPrice !== null ||
@@ -232,6 +276,7 @@ export default function Sidebar({
   const clearAllFilters = () => {
     onTypesChange([])
     onSubcategoriesChange([])
+    onSubsubcategoriesChange([])
     onTagsChange([])
     onPriceChange(null, null)
     if (isAdmin) {
@@ -284,21 +329,57 @@ export default function Sidebar({
 
                   {isExpanded && info.subs.length > 0 && (
                     <div className="ml-8 space-y-1 mt-1">
-                      {info.subs.map((sub) => (
-                        <label
-                          key={sub.name}
-                          className="flex items-center gap-2 text-sm text-gray-600 cursor-pointer"
-                        >
-                          <input
-                            type="checkbox"
-                            checked={selectedSubcategories.includes(sub.name)}
-                            onChange={() => toggleSubcategory(sub.name)}
-                            className="accent-gray-900"
-                          />
-                          <span className="flex-1">{sub.name}</span>
-                          <span className="text-xs text-gray-400">({sub.count})</span>
-                        </label>
-                      ))}
+                      {info.subs.map((sub) => {
+                        const subKey = `${type}::${sub.name}`
+                        const subExpanded = expandedSubcategories.has(subKey)
+                        return (
+                          <div key={sub.name}>
+                            <div className="flex items-center gap-2">
+                              <button
+                                type="button"
+                                onClick={() => toggleSubExpanded(subKey)}
+                                className="text-gray-400 hover:text-gray-700 w-3 text-[10px]"
+                                aria-label={subExpanded ? 'Collapse' : 'Expand'}
+                              >
+                                {sub.subsubs.length > 0 ? (subExpanded ? '▾' : '▸') : ''}
+                              </button>
+                              <label className="flex items-center gap-2 text-sm text-gray-600 cursor-pointer flex-1">
+                                <input
+                                  type="checkbox"
+                                  checked={selectedSubcategories.includes(sub.name)}
+                                  onChange={() => toggleSubcategory(sub.name)}
+                                  className="accent-gray-900"
+                                />
+                                <span className="flex-1">{sub.name}</span>
+                                <span className="text-xs text-gray-400">({sub.count})</span>
+                              </label>
+                            </div>
+
+                            {subExpanded && sub.subsubs.length > 0 && (
+                              <div className="ml-7 space-y-1 mt-1">
+                                {sub.subsubs.map((subsub) => {
+                                  const composite = `${sub.name}::${subsub.name}`
+                                  return (
+                                    <label
+                                      key={composite}
+                                      className="flex items-center gap-2 text-sm text-gray-500 cursor-pointer"
+                                    >
+                                      <input
+                                        type="checkbox"
+                                        checked={selectedSubsubcategories.includes(composite)}
+                                        onChange={() => toggleSubsubcategory(composite)}
+                                        className="accent-gray-900"
+                                      />
+                                      <span className="flex-1">{subsub.name}</span>
+                                      <span className="text-xs text-gray-400">({subsub.count})</span>
+                                    </label>
+                                  )
+                                })}
+                              </div>
+                            )}
+                          </div>
+                        )
+                      })}
                     </div>
                   )}
                 </div>
