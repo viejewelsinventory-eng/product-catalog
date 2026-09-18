@@ -46,7 +46,11 @@ export default function ProductGrid({
         .range(pageIndex * PAGE_SIZE, pageIndex * PAGE_SIZE + PAGE_SIZE - 1)
       switch (sortBy) {
         case 'sku_asc':
-          query = query.order('sku', { ascending: true })
+          // sku_sort_key is a generated column (letter prefix + zero-padded
+          // numeric suffix) so VPD1001 sorts before VPD10000 correctly --
+          // ordering by the raw sku column sorts lexicographically and
+          // puts VPD10000 before VPD1001.
+          query = query.order('sku_sort_key', { ascending: true })
           break
         case 'price_asc':
           query = query.order('price', { ascending: true })
