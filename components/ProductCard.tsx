@@ -67,11 +67,11 @@ export default function ProductCard({
   return (
     <div
       onClick={onOpen}
-      className="group flex flex-col h-full cursor-pointer rounded-2xl border border-stone-200/70 bg-white p-2 transition-all duration-500 hover:-translate-y-1 hover:border-[#c9b58a] hover:shadow-[0_24px_50px_-16px_rgba(28,25,23,0.22)]"
+      className="group flex flex-col h-full cursor-pointer rounded-2xl border border-stone-200/70 bg-white p-1.5 transition-all duration-500 hover:-translate-y-1 hover:border-[#c9b58a] hover:shadow-[0_24px_50px_-16px_rgba(28,25,23,0.22)]"
     >
       {/* Full image, no cropping. Blank overrides everything; otherwise fall back to photo-missing on load error */}
       <div className="relative w-full aspect-square overflow-hidden rounded-xl border border-stone-100 bg-white">
-        <div className="absolute inset-1.5">
+        <div className="absolute inset-1">
           <Image
             // key forces a fresh <img> mount on retry, since simply changing
             // the src prop on the same element won't reliably re-trigger a
@@ -87,16 +87,16 @@ export default function ProductCard({
           />
         </div>
       </div>
-      <div className="flex flex-col flex-1 gap-2.5 px-2 pt-4 pb-2">
+      <div className="flex flex-col flex-1 gap-1.5 px-1.5 pt-3 pb-1.5">
         {/* SKU under image, shown to everyone */}
-        <p className="font-serif text-lg tracking-wide text-stone-900">{product.sku}</p>
+        <p className="font-serif text-sm tracking-wide text-stone-900">{product.sku}</p>
         {/* Sub-Type / Sub-Sub-Type tags, shown to everyone */}
         {(product.subcategory?.length || subSubLabels.length) ? (
-          <div className="flex flex-wrap gap-1.5">
+          <div className="flex flex-wrap gap-1">
             {product.subcategory?.map((sub) => (
               <span
                 key={`sub-${sub}`}
-                className="rounded-full border border-[#dccfae] px-2.5 py-1 text-[10px] uppercase tracking-[0.14em] text-[#8a6d3b]"
+                className="rounded-full border border-[#dccfae] px-2 py-0.5 text-[9px] uppercase tracking-[0.12em] text-[#8a6d3b]"
               >
                 {sub}
               </span>
@@ -104,7 +104,7 @@ export default function ProductCard({
             {subSubLabels.map((label, i) => (
               <span
                 key={`subsub-${label}-${i}`}
-                className="rounded-full bg-stone-100 px-2.5 py-1 text-[10px] uppercase tracking-[0.14em] text-stone-500"
+                className="rounded-full bg-stone-100 px-2 py-0.5 text-[9px] uppercase tracking-[0.12em] text-stone-500"
               >
                 {label}
               </span>
@@ -113,24 +113,24 @@ export default function ProductCard({
         ) : null}
         {/* Admin only: file types (tags) available -- reserves space even when empty, per spec */}
         {isAdmin && (
-          <div className="flex flex-wrap gap-1 min-h-[1.25rem]">
+          <div className="flex flex-wrap gap-1 min-h-[1rem]">
             {product.tags && product.tags.length > 0 &&
               product.tags.map((tag) => (
                 <span
                   key={tag}
-                  className="rounded-md border border-stone-200 px-1.5 py-0.5 text-[10px] uppercase tracking-wider text-stone-500"
+                  className="rounded border border-stone-200 px-1 py-0.5 text-[9px] uppercase tracking-wider text-stone-500"
                 >
                   {tag}
                 </span>
               ))}
           </div>
         )}
-        <p className="font-serif text-xl text-[#8a6d3b]">
+        <p className="font-serif text-sm text-[#8a6d3b]">
           {formatPrice(product.price, currency, rate)}
         </p>
         {/* Admin only: Display and Category, stacked underneath each other */}
         {isAdmin && (
-          <div className="space-y-0.5 border-t border-stone-100 pt-3 text-[11px] uppercase tracking-wider text-stone-400">
+          <div className="space-y-0.5 border-t border-stone-100 pt-2 text-[10px] uppercase tracking-wider text-stone-400">
             <p>Display: {displayLabel}</p>
             <p>Category: {product.category || '—'}</p>
           </div>
@@ -140,7 +140,7 @@ export default function ProductCard({
         <button
           onClick={handleAdd}
           disabled={adding}
-          className="mt-1 w-full rounded-full bg-stone-900 py-3 text-[11px] uppercase tracking-[0.22em] text-white transition-colors duration-300 hover:bg-[#b08d57] disabled:opacity-50"
+          className="mt-1 w-full rounded-full bg-stone-900 py-2.5 text-[10px] uppercase tracking-[0.2em] text-white transition-colors duration-300 hover:bg-[#b08d57] disabled:opacity-50"
         >
           {adding ? 'Adding...' : 'Add to Cart'}
         </button>
