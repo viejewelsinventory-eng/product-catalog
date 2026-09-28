@@ -213,9 +213,9 @@ export default function ProductGrid({
   const rangeEnd = Math.min((page + 1) * PAGE_SIZE, totalCount)
 
   return (
-    <div className="flex-1 rounded-3xl bg-[#faf8f5] p-5 sm:p-8 lg:p-10">
+    <div className="flex-1 rounded-3xl bg-[#faf8f5] p-3 sm:p-4 lg:p-5">
       {isAdmin && (
-        <div className="mb-8 flex flex-wrap gap-3">
+        <div className="mb-6 flex flex-wrap gap-3">
           <button
             onClick={handleDownloadAll}
             disabled={downloadingAll}
@@ -243,14 +243,14 @@ export default function ProductGrid({
         </div>
       ) : (
         <>
-          <p className="mb-6 text-[11px] uppercase tracking-[0.25em] text-stone-400">
+          <p className="mb-4 px-1 text-[11px] uppercase tracking-[0.25em] text-stone-400">
             Showing {rangeStart.toLocaleString()}–{rangeEnd.toLocaleString()} of{' '}
             {totalCount.toLocaleString()} pieces
           </p>
 
           {/* 2 columns on phones, 4 on tablets, 5 on desktop */}
           <div
-            className={`grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-x-4 gap-y-8 sm:gap-x-5 sm:gap-y-10 transition-opacity duration-300 ${
+            className={`grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-x-3 gap-y-5 sm:gap-x-4 sm:gap-y-6 transition-opacity duration-300 ${
               loading ? 'opacity-40 pointer-events-none' : 'opacity-100'
             }`}
           >
@@ -267,7 +267,7 @@ export default function ProductGrid({
           {totalPages > 1 && (
             <nav
               aria-label="Pagination"
-              className="mt-14 flex flex-wrap items-center justify-center gap-2"
+              className="mt-12 flex flex-wrap items-center justify-center gap-2"
             >
               <button
                 onClick={() => goToPage(page - 1)}
