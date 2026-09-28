@@ -37,7 +37,7 @@ export default function HomeClient({ profile }: { profile: Profile | null }) {
     setMaxPrice(max)
   }
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-white">
       <Navbar
         profile={profile}
         search={search}
@@ -47,8 +47,10 @@ export default function HomeClient({ profile }: { profile: Profile | null }) {
       />
       {isAdmin && <AdminCurrencyRateBox />}
       {isAdmin && <AdminPriceIssuesPanel />}
-      <div className="max-w-7xl mx-auto px-4 py-6">
-        <div className="flex flex-col lg:flex-row gap-6">
+      {/* Wide container (no max-w-7xl cap) with tight side padding so the
+          sidebar sits near the left edge and the grid gets the rest */}
+      <div className="w-full max-w-[2000px] mx-auto px-3 sm:px-4 lg:px-5 py-5">
+        <div className="flex flex-col lg:flex-row gap-4 lg:gap-5">
           <Sidebar
             isAdmin={isAdmin}
             selectedTypes={types}
