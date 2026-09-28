@@ -60,17 +60,17 @@ export default function ProductCard({
   const displayLabel = VISIBILITY_LABELS[product.visibility] ?? product.visibility
   // subsubcategory stores composite "SubType::SubSubType" values; only the
   // Sub-Sub-Type portion is shown here since the Sub-Type is already
-  // rendered on its own line above.
+  // rendered on its own.
   const subSubLabels = (product.subsubcategory ?? []).map((value) =>
     value.includes('::') ? value.split('::')[1] : value
   )
   return (
     <div
       onClick={onOpen}
-      className="border border-gray-200 rounded-lg overflow-hidden bg-white flex flex-col h-full hover:shadow-md transition-shadow cursor-pointer"
+      className="group border border-stone-200 bg-white flex flex-col h-full cursor-pointer transition-all duration-300 hover:border-[#b08d57] hover:shadow-[0_10px_30px_rgba(28,25,23,0.08)]"
     >
       {/* Full image, no cropping. Blank overrides everything; otherwise fall back to photo-missing on load error */}
-      <div className="relative w-full aspect-square bg-gray-100">
+      <div className="relative w-full aspect-square bg-[#faf8f5] overflow-hidden">
         <Image
           // key forces a fresh <img> mount on retry, since simply changing
           // the src prop on the same element won't reliably re-trigger a
@@ -80,21 +80,21 @@ export default function ProductCard({
           alt={product.sku}
           fill
           sizes="(max-width: 768px) 50vw, (max-width: 1200px) 33vw, 25vw"
-          className="object-contain"
+          className="object-contain transition-transform duration-700 ease-out group-hover:scale-105"
           onError={handleImageError}
           unoptimized
         />
       </div>
-      <div className="p-3 flex flex-col flex-1 gap-1.5">
+      <div className="p-4 flex flex-col flex-1 gap-2 border-t border-stone-100">
         {/* SKU under image, shown to everyone */}
-        <p className="text-sm font-semibold text-gray-900">{product.sku}</p>
+        <p className="font-serif text-base tracking-wide text-stone-900">{product.sku}</p>
         {/* Sub-Type / Sub-Sub-Type tags, shown to everyone */}
         {(product.subcategory?.length || subSubLabels.length) ? (
-          <div className="flex flex-wrap gap-1">
+          <div className="flex flex-wrap gap-1.5">
             {product.subcategory?.map((sub) => (
               <span
                 key={`sub-${sub}`}
-                className="text-[10px] px-1.5 py-0.5 rounded bg-blue-50 text-blue-700 border border-blue-100"
+                className="text-[9px] uppercase tracking-[0.15em] px-2 py-0.5 border border-[#d9c7a3] text-[#8a6d3b]"
               >
                 {sub}
               </span>
@@ -102,7 +102,7 @@ export default function ProductCard({
             {subSubLabels.map((label, i) => (
               <span
                 key={`subsub-${label}-${i}`}
-                className="text-[10px] px-1.5 py-0.5 rounded bg-purple-50 text-purple-700 border border-purple-100"
+                className="text-[9px] uppercase tracking-[0.15em] px-2 py-0.5 bg-stone-100 text-stone-500"
               >
                 {label}
               </span>
@@ -116,17 +116,19 @@ export default function ProductCard({
               product.tags.map((tag) => (
                 <span
                   key={tag}
-                  className="text-[10px] px-1.5 py-0.5 rounded bg-gray-100 text-gray-600 border border-gray-200"
+                  className="text-[9px] uppercase tracking-wider px-1.5 py-0.5 border border-stone-200 text-stone-500"
                 >
                   {tag}
                 </span>
               ))}
           </div>
         )}
-        <p className="text-sm text-gray-700">{formatPrice(product.price, currency, rate)}</p>
+        <p className="font-serif text-sm text-[#8a6d3b]">
+          {formatPrice(product.price, currency, rate)}
+        </p>
         {/* Admin only: Display and Category, stacked underneath each other */}
         {isAdmin && (
-          <div className="text-xs text-gray-500 space-y-0.5">
+          <div className="text-[10px] uppercase tracking-wider text-stone-400 space-y-0.5 border-t border-stone-100 pt-2">
             <p>Display: {displayLabel}</p>
             <p>Category: {product.category || '—'}</p>
           </div>
@@ -136,7 +138,7 @@ export default function ProductCard({
         <button
           onClick={handleAdd}
           disabled={adding}
-          className="mt-1 bg-gray-900 text-white text-xs rounded-md py-2 hover:bg-gray-800 disabled:opacity-50"
+          className="mt-2 w-full bg-stone-900 text-white text-[11px] uppercase tracking-[0.2em] py-3 transition-colors duration-300 hover:bg-[#b08d57] disabled:opacity-50"
         >
           {adding ? 'Adding...' : 'Add to Cart'}
         </button>
