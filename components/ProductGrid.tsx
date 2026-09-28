@@ -18,6 +18,10 @@ export type ActiveFilters = {
   noImageOnly: boolean
 }
 export type SortOption = 'newest' | 'sku_asc' | 'price_asc' | 'price_desc'
+
+const OUTLINE_BUTTON =
+  'border border-stone-300 bg-white text-stone-800 text-[11px] uppercase tracking-[0.18em] transition-colors duration-300 hover:border-[#b08d57] hover:text-[#8a6d3b] disabled:opacity-50'
+
 export default function ProductGrid({
   filters,
   isAdmin,
@@ -182,39 +186,39 @@ export default function ProductGrid({
   }
   if (loading) {
     return (
-      <div className="flex-1 flex items-center justify-center py-20 text-gray-500">
-        Loading products...
+      <div className="flex-1 flex items-center justify-center py-32 font-serif text-xs uppercase tracking-[0.3em] text-stone-400">
+        Loading collection...
       </div>
     )
   }
   return (
     <div className="flex-1">
       {isAdmin && (
-        <div className="flex flex-wrap gap-3 mb-4">
+        <div className="flex flex-wrap gap-3 mb-6">
           <button
             onClick={handleDownloadAll}
             disabled={downloadingAll}
-            className="bg-white border border-gray-300 text-gray-900 rounded-md px-4 py-2 text-sm font-medium hover:bg-gray-50 disabled:opacity-50"
+            className={`${OUTLINE_BUTTON} px-5 py-2.5`}
           >
             {downloadingAll ? 'Preparing file...' : 'Download All SKUs (Excel)'}
           </button>
           <button
             onClick={handleDownloadFiltered}
             disabled={downloadingFiltered}
-            className="bg-white border border-gray-300 text-gray-900 rounded-md px-4 py-2 text-sm font-medium hover:bg-gray-50 disabled:opacity-50"
+            className={`${OUTLINE_BUTTON} px-5 py-2.5`}
           >
             {downloadingFiltered ? 'Preparing file...' : 'Download Filtered SKUs (Excel)'}
           </button>
         </div>
       )}
       {products.length === 0 ? (
-        <div className="flex-1 flex items-center justify-center py-20 text-gray-500">
-          No products match your filters.
+        <div className="flex-1 flex items-center justify-center py-32 font-serif text-sm tracking-widest text-stone-400">
+          No pieces match your filters.
         </div>
       ) : (
         <>
           {/* Capped at 4 columns, no 5-column tier */}
-          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-x-5 gap-y-8 sm:gap-x-6 sm:gap-y-10">
             {products.map((product) => (
               <ProductCard
                 key={product.id}
@@ -225,11 +229,11 @@ export default function ProductGrid({
             ))}
           </div>
           {hasMore && (
-            <div className="flex justify-center mt-8">
+            <div className="flex justify-center mt-12">
               <button
                 onClick={loadMore}
                 disabled={loadingMore}
-                className="bg-white border border-gray-300 text-gray-900 rounded-md px-6 py-2 text-sm font-medium hover:bg-gray-50 disabled:opacity-50"
+                className={`${OUTLINE_BUTTON} px-10 py-3`}
               >
                 {loadingMore ? 'Loading...' : 'Load More'}
               </button>
