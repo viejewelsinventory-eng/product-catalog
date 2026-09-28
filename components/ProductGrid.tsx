@@ -5,9 +5,9 @@ import type { Product } from '@/lib/types'
 import ProductCard from './ProductCard'
 import ProductDetailModal from './ProductDetailModal'
 import { fetchAllSkus, fetchFilteredSkus, downloadSkusAsExcel } from '@/lib/exportSkus'
-// 24 divides evenly into both the 2-column and 3-column layouts, and keeps
-// the number of simultaneous Drive thumbnail requests per page modest.
-const PAGE_SIZE = 24
+// 100 divides evenly into the 2-, 4- and 5-column layouts, so the last row
+// of a page is never left partially filled.
+const PAGE_SIZE = 100
 export type ActiveFilters = {
   category: string | null
   types: string[]
@@ -25,8 +25,8 @@ const OUTLINE_BUTTON =
   'rounded-full border border-stone-300 bg-white text-stone-800 text-[11px] uppercase tracking-[0.18em] transition-colors duration-300 hover:border-[#b08d57] hover:text-[#8a6d3b] disabled:opacity-50'
 
 // Returns 0-indexed page numbers with gaps collapsed to ellipses, e.g.
-// 1 ... 4 5 6 ... 3500. With ~176K SKUs there are thousands of pages, so
-// showing every number is not an option.
+// 1 ... 4 5 6 ... 1760. With ~176K SKUs there are well over a thousand
+// pages, so showing every number is not an option.
 function getPageNumbers(
   current: number,
   total: number
@@ -248,8 +248,9 @@ export default function ProductGrid({
             {totalCount.toLocaleString()} pieces
           </p>
 
+          {/* 2 columns on phones, 4 on tablets, 5 on desktop */}
           <div
-            className={`grid grid-cols-2 lg:grid-cols-3 gap-x-5 gap-y-8 sm:gap-x-7 sm:gap-y-10 transition-opacity duration-300 ${
+            className={`grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-x-4 gap-y-8 sm:gap-x-5 sm:gap-y-10 transition-opacity duration-300 ${
               loading ? 'opacity-40 pointer-events-none' : 'opacity-100'
             }`}
           >
