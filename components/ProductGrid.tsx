@@ -5,7 +5,9 @@ import type { Product } from '@/lib/types'
 import ProductCard from './ProductCard'
 import ProductDetailModal from './ProductDetailModal'
 import { fetchAllSkus, fetchFilteredSkus, downloadSkusAsExcel } from '@/lib/exportSkus'
-const PAGE_SIZE = 50
+// 24 divides evenly into both the 2-column and 3-column layouts, and keeps
+// the number of simultaneous Drive thumbnail requests per page modest.
+const PAGE_SIZE = 24
 export type ActiveFilters = {
   category: string | null
   types: string[]
@@ -20,7 +22,27 @@ export type ActiveFilters = {
 export type SortOption = 'newest' | 'sku_asc' | 'price_asc' | 'price_desc'
 
 const OUTLINE_BUTTON =
-  'border border-stone-300 bg-white text-stone-800 text-[11px] uppercase tracking-[0.18em] transition-colors duration-300 hover:border-[#b08d57] hover:text-[#8a6d3b] disabled:opacity-50'
+  'rounded-full border border-stone-300 bg-white text-stone-800 text-[11px] uppercase tracking-[0.18em] transition-colors duration-300 hover:border-[#b08d57] hover:text-[#8a6d3b] disabled:opacity-50'
+
+// Returns 0-indexed page numbers with gaps collapsed to ellipses, e.g.
+// 1 ... 4 5 6 ... 3500. With ~176K SKUs there are thousands of pages, so
+// showing every number is not an option.
+function getPageNumbers(
+  current: number,
+  total: number
+): (number | 'gap-left' | 'gap-right')[] {
+  if (total <= 7) return Array.from({ length: total }, (_, i) => i)
+  let start = Math.max(1, current - 1)
+  let end = Math.min(total - 2, current + 1)
+  if (current <= 2) end = Math.min(total - 2, 3)
+  if (current >= total - 3) start = Math.max(1, total - 4)
+  const pages: (number | 'gap-left' | 'gap-right')[] = [0]
+  if (start > 1) pages.push('gap-left')
+  for (let i = start; i <= end; i++) pages.push(i)
+  if (end < total - 2) pages.push('gap-right')
+  pages.push(total - 1)
+  return pages
+}
 
 export default function ProductGrid({
   filters,
@@ -35,18 +57,24 @@ export default function ProductGrid({
 }) {
   const supabase = createClient()
   const [products, setProducts] = useState<Product[]>([])
-  const [page, setPage] = useState(0)
   const [loading, setLoading] = useState(true)
-  const [loadingMore, setLoadingMore] = useState(false)
-  const [hasMore, setHasMore] = useState(true)
+  const [totalCount, setTotalCount] = useState(0)
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null)
   const [downloadingAll, setDownloadingAll] = useState(false)
   const [downloadingFiltered, setDownloadingFiltered] = useState(false)
+
+  // Page resets to the first page automatically whenever filters, search or
+  // sort change: the stored page only counts while its key matches the
+  // current filter key, otherwise we are back on page 0 (no double fetch).
+  const filterKey = JSON.stringify([filters, search, sortBy, isAdmin])
+  const [pageState, setPageState] = useState({ key: filterKey, page: 0 })
+  const page = pageState.key === filterKey ? pageState.page : 0
+
   const buildQuery = useCallback(
     (pageIndex: number) => {
       let query = supabase
         .from('products')
-        .select('*')
+        .select('*', { count: 'exact' })
         .range(pageIndex * PAGE_SIZE, pageIndex * PAGE_SIZE + PAGE_SIZE - 1)
       switch (sortBy) {
         case 'sku_asc':
@@ -114,40 +142,36 @@ export default function ProductGrid({
     },
     [filters, search, sortBy, supabase, isAdmin]
   )
-  // Reset and refetch whenever filters, search, or sort change
+
+  // Fetch whenever the filters, search, sort or page change
   useEffect(() => {
     let cancelled = false
     setLoading(true)
-    setPage(0)
-    setHasMore(true)
-    buildQuery(0).then(({ data, error }) => {
+    buildQuery(page).then(({ data, error, count }) => {
       if (cancelled) return
       if (error) {
         console.error('Failed to load products:', error)
         setProducts([])
+        setTotalCount(0)
       } else {
         setProducts(data ?? [])
-        setHasMore((data?.length ?? 0) === PAGE_SIZE)
+        setTotalCount(count ?? 0)
       }
       setLoading(false)
     })
     return () => {
       cancelled = true
     }
-  }, [buildQuery])
-  const loadMore = async () => {
-    setLoadingMore(true)
-    const nextPage = page + 1
-    const { data, error } = await buildQuery(nextPage)
-    if (error) {
-      console.error('Failed to load more products:', error)
-    } else {
-      setProducts((prev) => [...prev, ...(data ?? [])])
-      setHasMore((data?.length ?? 0) === PAGE_SIZE)
-      setPage(nextPage)
-    }
-    setLoadingMore(false)
+  }, [buildQuery, page])
+
+  const totalPages = Math.max(1, Math.ceil(totalCount / PAGE_SIZE))
+
+  const goToPage = (target: number) => {
+    if (target < 0 || target >= totalPages || target === page) return
+    setPageState({ key: filterKey, page: target })
+    window.scrollTo({ top: 0, behavior: 'smooth' })
   }
+
   const handleDownloadAll = async () => {
     setDownloadingAll(true)
     try {
@@ -184,41 +208,51 @@ export default function ProductGrid({
       setDownloadingFiltered(false)
     }
   }
-  if (loading) {
-    return (
-      <div className="flex-1 flex items-center justify-center py-32 font-serif text-xs uppercase tracking-[0.3em] text-stone-400">
-        Loading collection...
-      </div>
-    )
-  }
+
+  const rangeStart = totalCount === 0 ? 0 : page * PAGE_SIZE + 1
+  const rangeEnd = Math.min((page + 1) * PAGE_SIZE, totalCount)
+
   return (
-    <div className="flex-1">
+    <div className="flex-1 rounded-3xl bg-[#faf8f5] p-5 sm:p-8 lg:p-10">
       {isAdmin && (
-        <div className="flex flex-wrap gap-3 mb-6">
+        <div className="mb-8 flex flex-wrap gap-3">
           <button
             onClick={handleDownloadAll}
             disabled={downloadingAll}
-            className={`${OUTLINE_BUTTON} px-5 py-2.5`}
+            className={`${OUTLINE_BUTTON} px-6 py-3`}
           >
             {downloadingAll ? 'Preparing file...' : 'Download All SKUs (Excel)'}
           </button>
           <button
             onClick={handleDownloadFiltered}
             disabled={downloadingFiltered}
-            className={`${OUTLINE_BUTTON} px-5 py-2.5`}
+            className={`${OUTLINE_BUTTON} px-6 py-3`}
           >
             {downloadingFiltered ? 'Preparing file...' : 'Download Filtered SKUs (Excel)'}
           </button>
         </div>
       )}
-      {products.length === 0 ? (
-        <div className="flex-1 flex items-center justify-center py-32 font-serif text-sm tracking-widest text-stone-400">
+
+      {loading && products.length === 0 ? (
+        <div className="flex items-center justify-center py-40 font-serif text-xs uppercase tracking-[0.35em] text-stone-400">
+          Loading collection...
+        </div>
+      ) : products.length === 0 ? (
+        <div className="flex items-center justify-center py-40 font-serif text-base tracking-widest text-stone-400">
           No pieces match your filters.
         </div>
       ) : (
         <>
-          {/* Capped at 4 columns, no 5-column tier */}
-          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-x-5 gap-y-8 sm:gap-x-6 sm:gap-y-10">
+          <p className="mb-6 text-[11px] uppercase tracking-[0.25em] text-stone-400">
+            Showing {rangeStart.toLocaleString()}–{rangeEnd.toLocaleString()} of{' '}
+            {totalCount.toLocaleString()} pieces
+          </p>
+
+          <div
+            className={`grid grid-cols-2 lg:grid-cols-3 gap-x-5 gap-y-8 sm:gap-x-7 sm:gap-y-10 transition-opacity duration-300 ${
+              loading ? 'opacity-40 pointer-events-none' : 'opacity-100'
+            }`}
+          >
             {products.map((product) => (
               <ProductCard
                 key={product.id}
@@ -228,19 +262,54 @@ export default function ProductGrid({
               />
             ))}
           </div>
-          {hasMore && (
-            <div className="flex justify-center mt-12">
+
+          {totalPages > 1 && (
+            <nav
+              aria-label="Pagination"
+              className="mt-14 flex flex-wrap items-center justify-center gap-2"
+            >
               <button
-                onClick={loadMore}
-                disabled={loadingMore}
-                className={`${OUTLINE_BUTTON} px-10 py-3`}
+                onClick={() => goToPage(page - 1)}
+                disabled={page === 0 || loading}
+                className={`${OUTLINE_BUTTON} px-5 py-2.5`}
               >
-                {loadingMore ? 'Loading...' : 'Load More'}
+                Previous
               </button>
-            </div>
+
+              {getPageNumbers(page, totalPages).map((entry) =>
+                typeof entry === 'string' ? (
+                  <span key={entry} className="px-1 text-stone-400">
+                    …
+                  </span>
+                ) : (
+                  <button
+                    key={entry}
+                    onClick={() => goToPage(entry)}
+                    disabled={loading}
+                    aria-current={entry === page ? 'page' : undefined}
+                    className={`h-10 min-w-[2.5rem] rounded-full px-3 text-sm transition-colors duration-300 ${
+                      entry === page
+                        ? 'bg-stone-900 text-white'
+                        : 'text-stone-600 hover:bg-white hover:text-[#8a6d3b]'
+                    }`}
+                  >
+                    {(entry + 1).toLocaleString()}
+                  </button>
+                )
+              )}
+
+              <button
+                onClick={() => goToPage(page + 1)}
+                disabled={page >= totalPages - 1 || loading}
+                className={`${OUTLINE_BUTTON} px-5 py-2.5`}
+              >
+                Next
+              </button>
+            </nav>
           )}
         </>
       )}
+
       {selectedProduct && (
         <ProductDetailModal
           product={selectedProduct}
