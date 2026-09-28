@@ -67,11 +67,11 @@ export default function ProductCard({
   return (
     <div
       onClick={onOpen}
-      className="group flex flex-col h-full cursor-pointer rounded-2xl border border-stone-200/70 bg-white p-3 transition-all duration-500 hover:-translate-y-1 hover:border-[#c9b58a] hover:shadow-[0_24px_50px_-16px_rgba(28,25,23,0.22)]"
+      className="group flex flex-col h-full cursor-pointer rounded-2xl border border-stone-200/70 bg-white p-2 transition-all duration-500 hover:-translate-y-1 hover:border-[#c9b58a] hover:shadow-[0_24px_50px_-16px_rgba(28,25,23,0.22)]"
     >
       {/* Full image, no cropping. Blank overrides everything; otherwise fall back to photo-missing on load error */}
-      <div className="relative w-full aspect-square overflow-hidden rounded-xl bg-[#faf8f5]">
-        <div className="absolute inset-3">
+      <div className="relative w-full aspect-square overflow-hidden rounded-xl border border-stone-100 bg-white">
+        <div className="absolute inset-1.5">
           <Image
             // key forces a fresh <img> mount on retry, since simply changing
             // the src prop on the same element won't reliably re-trigger a
@@ -80,14 +80,14 @@ export default function ProductCard({
             src={displaySrc}
             alt={product.sku}
             fill
-            sizes="(max-width: 1024px) 50vw, 33vw"
+            sizes="(max-width: 768px) 50vw, (max-width: 1024px) 25vw, 20vw"
             className="object-contain transition-transform duration-700 ease-out group-hover:scale-105"
             onError={handleImageError}
             unoptimized
           />
         </div>
       </div>
-      <div className="flex flex-col flex-1 gap-3 px-2 pt-5 pb-2">
+      <div className="flex flex-col flex-1 gap-2.5 px-2 pt-4 pb-2">
         {/* SKU under image, shown to everyone */}
         <p className="font-serif text-lg tracking-wide text-stone-900">{product.sku}</p>
         {/* Sub-Type / Sub-Sub-Type tags, shown to everyone */}
@@ -140,7 +140,7 @@ export default function ProductCard({
         <button
           onClick={handleAdd}
           disabled={adding}
-          className="mt-1 w-full rounded-full bg-stone-900 py-3.5 text-[11px] uppercase tracking-[0.22em] text-white transition-colors duration-300 hover:bg-[#b08d57] disabled:opacity-50"
+          className="mt-1 w-full rounded-full bg-stone-900 py-3 text-[11px] uppercase tracking-[0.22em] text-white transition-colors duration-300 hover:bg-[#b08d57] disabled:opacity-50"
         >
           {adding ? 'Adding...' : 'Add to Cart'}
         </button>
