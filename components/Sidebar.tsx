@@ -104,7 +104,7 @@ export default function Sidebar({
       })
 
       if (typeSubData) {
-        const groups: Record<
+        const groups: Record
           string,
           { total: number; subs: Record<string, { total: number; subsubs: Record<string, number> }> }
         > = {}
@@ -287,91 +287,93 @@ export default function Sidebar({
   }
 
   return (
-    <aside className="w-full lg:w-64 flex-shrink-0 space-y-6 lg:sticky lg:top-4 lg:self-start lg:max-h-[calc(100vh-2rem)] lg:overflow-y-auto">
+    <aside className="w-full lg:w-56 flex-shrink-0 space-y-4 lg:sticky lg:top-4 lg:self-start lg:max-h-[calc(100vh-2rem)] lg:overflow-y-auto">
       {hasActiveFilters && (
         <button
           type="button"
           onClick={clearAllFilters}
-          className="w-full text-sm font-medium text-gray-700 border border-gray-300 rounded-lg px-4 py-2 bg-white hover:bg-gray-50"
+          className="w-full rounded-full border border-stone-300 bg-white px-4 py-2.5 text-[11px] uppercase tracking-[0.18em] text-stone-700 transition-colors duration-300 hover:border-[#b08d57] hover:text-[#8a6d3b]"
         >
           Clear All Filters
         </button>
       )}
 
       {Object.keys(typeGroups).length > 0 && (
-        <div className="bg-white border border-gray-200 rounded-lg p-4">
-          <h3 className="text-sm font-semibold text-gray-900 mb-3">Type</h3>
+        <div className="rounded-2xl border border-stone-200/70 bg-white p-4">
+          <h3 className="mb-3 text-[11px] font-medium uppercase tracking-[0.2em] text-stone-500">
+            Type
+          </h3>
           <div className="space-y-1 max-h-96 overflow-y-auto">
             {Object.entries(typeGroups).map(([type, info]) => {
               const isExpanded = expandedTypes.has(type)
               return (
-                <div key={type} className="border-b border-gray-100 last:border-0 pb-1">
-                  <div className="flex items-center gap-2 py-1">
+                <div key={type} className="border-b border-stone-100 last:border-0 pb-1">
+                  <div className="flex items-center gap-1.5 py-1">
                     <button
                       type="button"
                       onClick={() => toggleExpanded(type)}
-                      className="text-gray-400 hover:text-gray-700 w-4 text-xs"
+                      className="w-4 text-xs text-stone-400 hover:text-stone-700"
                       aria-label={isExpanded ? 'Collapse' : 'Expand'}
                     >
                       {info.subs.length > 0 ? (isExpanded ? '▾' : '▸') : ''}
                     </button>
-                    <label className="flex items-center gap-2 text-sm text-gray-800 cursor-pointer flex-1">
+                    <label className="flex flex-1 cursor-pointer items-center gap-2 text-xs text-stone-800">
                       <input
                         type="checkbox"
                         checked={selectedTypes.includes(type)}
                         onChange={() => toggleType(type)}
-                        className="accent-gray-900"
+                        className="accent-stone-900"
                       />
                       <span className="flex-1">{type}</span>
-                      <span className="text-xs text-gray-400">({info.total})</span>
+                      <span className="text-[10px] text-stone-400">({info.total})</span>
                     </label>
                   </div>
 
                   {isExpanded && info.subs.length > 0 && (
-                    <div className="ml-8 space-y-1 mt-1">
+                    <div className="ml-6 space-y-1 mt-1">
                       {info.subs.map((sub) => {
                         const subKey = `${type}::${sub.name}`
                         const subExpanded = expandedSubcategories.has(subKey)
                         return (
                           <div key={sub.name}>
-                            <div className="flex items-center gap-2">
+                            <div className="flex items-center gap-1.5">
                               <button
                                 type="button"
                                 onClick={() => toggleSubExpanded(subKey)}
-                                className="text-gray-400 hover:text-gray-700 w-3 text-[10px]"
+                                className="w-3 text-[10px] text-stone-400 hover:text-stone-700"
                                 aria-label={subExpanded ? 'Collapse' : 'Expand'}
                               >
                                 {sub.subsubs.length > 0 ? (subExpanded ? '▾' : '▸') : ''}
                               </button>
-                              <label className="flex items-center gap-2 text-sm text-gray-600 cursor-pointer flex-1">
+                              <label className="flex flex-1 cursor-pointer items-center gap-2 text-xs text-stone-600">
                                 <input
                                   type="checkbox"
                                   checked={selectedSubcategories.includes(sub.name)}
                                   onChange={() => toggleSubcategory(sub.name)}
-                                  className="accent-gray-900"
+                                  className="accent-stone-900"
                                 />
                                 <span className="flex-1">{sub.name}</span>
-                                <span className="text-xs text-gray-400">({sub.count})</span>
+                                <span className="text-[10px] text-stone-400">({sub.count})</span>
                               </label>
                             </div>
 
                             {subExpanded && sub.subsubs.length > 0 && (
-                              <div className="ml-7 space-y-1 mt-1">
+                              <div className="ml-6 space-y-1 mt-1">
                                 {sub.subsubs.map((subsub) => {
                                   const composite = `${sub.name}::${subsub.name}`
                                   return (
                                     <label
                                       key={composite}
-                                      className="flex items-center gap-2 text-sm text-gray-500 cursor-pointer"
+                                      className="flex cursor-pointer items-center gap-2 text-xs text-stone-500"
                                     >
                                       <input
                                         type="checkbox"
                                         checked={selectedSubsubcategories.includes(composite)}
                                         onChange={() => toggleSubsubcategory(composite)}
-                                        className="accent-gray-900"
+                                        className="accent-stone-900"
                                       />
                                       <span className="flex-1">{subsub.name}</span>
-                                      <span className="text-xs text-gray-400">({subsub.count})</span>
+                                      <span className="text-[10px] text-stone-400">({subsub.count})</span>
                                     </label>
                                   )
                                 })}
@@ -390,19 +392,21 @@ export default function Sidebar({
       )}
 
       {allTags.length > 0 && (
-        <div className="bg-white border border-gray-200 rounded-lg p-4">
-          <h3 className="text-sm font-semibold text-gray-900 mb-3">File Types</h3>
-          <div className="flex flex-wrap gap-2">
+        <div className="rounded-2xl border border-stone-200/70 bg-white p-4">
+          <h3 className="mb-3 text-[11px] font-medium uppercase tracking-[0.2em] text-stone-500">
+            File Types
+          </h3>
+          <div className="flex flex-wrap gap-1.5">
             {allTags.map((tag) => {
               const active = selectedTags.includes(tag)
               return (
                 <button
                   key={tag}
                   onClick={() => toggleTag(tag)}
-                  className={`text-xs px-3 py-1 rounded-full border ${
+                  className={`rounded-full border px-2.5 py-1 text-[11px] transition-colors duration-300 ${
                     active
-                      ? 'bg-gray-900 text-white border-gray-900'
-                      : 'bg-white text-gray-700 border-gray-300 hover:border-gray-500'
+                      ? 'border-stone-900 bg-stone-900 text-white'
+                      : 'border-stone-300 bg-white text-stone-700 hover:border-[#b08d57]'
                   }`}
                 >
                   {getFileTypeLabel(tag)}
@@ -414,24 +418,24 @@ export default function Sidebar({
       )}
 
       {isAdmin && (
-        <div className="bg-amber-50 border border-amber-200 rounded-lg p-4 space-y-4">
+        <div className="space-y-4 rounded-2xl border border-amber-200 bg-amber-50/60 p-4">
           <div className="flex items-center justify-between">
-            <h3 className="text-sm font-semibold text-amber-900">
+            <h3 className="text-[11px] font-medium uppercase tracking-[0.2em] text-amber-900">
               Admin Filters
             </h3>
-            <span className="text-xs font-medium text-amber-800">
+            <span className="text-[11px] font-medium text-amber-800">
               Total: {totalCount}
             </span>
           </div>
 
           <div>
-            <label className="block text-xs font-medium text-amber-800 mb-1">
+            <label className="mb-1 block text-[11px] font-medium text-amber-800">
               Display
             </label>
             <select
               value={selectedVisibility ?? ''}
               onChange={(e) => onVisibilityChange(e.target.value || null)}
-              className="w-full text-sm border border-amber-300 rounded-md px-2 py-1.5 bg-white focus:outline-none focus:ring-2 focus:ring-amber-500"
+              className="w-full rounded-lg border border-amber-300 bg-white px-2 py-1.5 text-xs focus:outline-none focus:ring-2 focus:ring-amber-500"
             >
               <option value="">All</option>
               {VISIBILITY_OPTIONS.map((opt) => (
@@ -443,34 +447,12 @@ export default function Sidebar({
           </div>
 
           <div>
-            <label className="block text-xs font-medium text-amber-800 mb-1">
+            <label className="mb-1 block text-[11px] font-medium text-amber-800">
               Category
             </label>
             <select
               value={selectedCategory ?? ''}
               onChange={(e) => onCategoryChange(e.target.value || null)}
-              className="w-full text-sm border border-amber-300 rounded-md px-2 py-1.5 bg-white focus:outline-none focus:ring-2 focus:ring-amber-500"
+              className="w-full rounded-lg border border-amber-300 bg-white px-2 py-1.5 text-xs focus:outline-none focus:ring-2 focus:ring-amber-500"
             >
               <option value="">All Categories</option>
-              {adminCategories.map((cat) => (
-                <option key={cat} value={cat}>
-                  {cat}
-                </option>
-              ))}
-            </select>
-          </div>
-
-          <label className="flex items-center gap-2 text-sm text-amber-900 cursor-pointer">
-            <input
-              type="checkbox"
-              checked={noImageOnly}
-              onChange={(e) => onNoImageOnlyChange(e.target.checked)}
-              className="accent-amber-700"
-            />
-            <span>No images</span>
-          </label>
-        </div>
-      )}
-    </aside>
-  )
-}
